@@ -1,0 +1,178 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     | Website:  https://openfoam.org
+#   \\  /    A nd           | Copyright (C) 2015-2020 OpenFOAM Foundation
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM.
+#
+#     OpenFOAM is free software: you can redistribute it and/or modify it
+#     under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+#     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#     for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Script
+#     foamCreateVideo
+#
+# Description
+#     Creates a video file from PNG images
+#     - requires mencoder or ffmpeg
+#
+#------------------------------------------------------------------------------
+
+usage() {
+    cat <<USAGE
+
+Usage: ${0##*/} [OPTIONS] ...
+options:
+  -dir   | -d <dir>   directory containing png images (default local dir)
+  -fps   | -f <fps>   frames per second (default = 10)
+  -help  | -h         print the usage
+  -image | -i <name>  name of image sequence (default = image)
+  -out   | -o <name>  name of output video file (default = video)
+  -start | -s <frame> specify the start frame number for ffmpeg
+  -webm  | -w         WebM output video file format
+
+Creates a video file from a sequence of PNG images
+- A sequence named "image" will expect files image.0000.png, image.0001.png, etc
+- The default output video compression format is MPEG-4, with WebM as an option
+- The default file name, using MPEG-4 compression, is video.mp4
+- By default the video codec is high resolution
+
+Requires mencoder or ffmpeg for MPEG-4 output, ffmpeg for WebM output
+
+USAGE
+}
+
+error() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    usage
+    exit 1
+}
+
+# Default settings
+dir=.
+image=image
+video=video
+fps=10
+fmt=mp4
+start=
+
+while [ "$#" -gt 0 ]
+do
+   case "$1" in
+   -h | -help)
+      usage && exit 0
+      ;;
+   -d | -dir)
+      [ "$#" -ge 2 ] || error "'$1' option requires an argument"
+      dir=$2
+      shift 2
+      ;;
+   -f | -fps)
+      [ "$#" -ge 2 ] || error "'$1' option requires an argument"
+      fps=$2
+      shift 2
+      ;;
+   -i | -image)
+      [ "$#" -ge 2 ] || error "'$1' option requires an argument"
+      image=$2
+      shift 2
+      ;;
+   -o | -out)
+      [ "$#" -ge 2 ] || error "'$1' option requires an argument"
+      video=$2
+      shift 2
+      ;;
+   -s | -start)
+      [ "$#" -ge 2 ] || error "'$1' option requires an argument"
+      start=$2
+      echo "Selected start frame, requires ffmpeg..."
+      [ "$start" -eq "$start" ] 2> /dev/null || \
+          error "'$1' option requires an integer argument"
+      shift 2
+      ;;
+   -w | -webm)
+      fmt=webm
+      echo "Selected $fmt format, requires ffmpeg..."
+      shift
+      ;;
+   -*)
+      error "invalid option '$1'"
+      ;;
+   *)
+      break
+      ;;
+    esac
+done
+
+ffmpegCreateVideo () {
+    _dir="$1"
+    _image="$2"
+    _fps="$3"
+    _out="$4"
+    _fmt="$5"
+    _start="$6"
+    _pwd="$(pwd)"
+
+    [ "$_start" ] && _start="-start_number $_start"
+
+    cd "$_dir" || return 1
+
+    #shellcheck disable=SC2086
+    ffmpeg \
+        -framerate "$_fps" \
+        $_start \
+        -i "$_image".%04d.png \
+        -vf "format=yuv420p,pad=ceil(iw/2)*2:ceil(ih/2)*2" \
+        "$_pwd/$_out.$_fmt"
+
+    return 0
+}
+
+mencoderCreateVideo () {
+    _dir="$1"
+    _image="$2"
+    _fps="$3"
+    _out="$4"
+    _fmt="$5"
+
+    mencoder \
+        "mf://$_dir/$_image.*.png" \
+        -mf fps="$_fps" \
+        -o "$_out.$_fmt" \
+        -ovc x264
+
+    return 0
+}
+
+isInstalled () {
+    command -v "$1" >/dev/null 2>&1
+}
+
+#
+# MAIN
+#
+
+[ -f "$(find "$dir" -name "$image.*.png" | sort | head -1)" ] || \
+    error "Cannot find first file in image sequence"
+
+! [ "$fmt" = "webm" ] && ! [ "$start" ] && isInstalled mencoder && \
+    mencoderCreateVideo "$dir" "$image" "$fps" "$video" "$fmt" && \
+    exit 0
+
+isInstalled ffmpeg && \
+    ffmpegCreateVideo "$dir" "$image" "$fps" "$video" "$fmt" "$start" || \
+        echo "ffmpeg not installed."

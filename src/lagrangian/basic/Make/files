@@ -1,0 +1,9 @@
+particle/particle.C
+particle/particleIO.C
+IOPosition/IOPositionName.C
+passiveParticle/passiveParticleCloud.C
+indexedParticle/indexedParticleCloud.C
+
+InteractionLists/referredWallFace/referredWallFace.C
+
+LIB = $(FOAM_LIBBIN)/liblagrangian

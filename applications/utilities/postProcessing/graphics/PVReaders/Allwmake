@@ -1,0 +1,58 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # Run from this directory
+
+# Parse arguments for library compilation
+. $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
+
+if [ ! -d "$ParaView_DIR" ]
+then
+    echo "    Warning: ParaView not found in $ParaView_DIR. Skipping."
+    exit 0
+fi
+
+if [ -z "$PV_PLUGIN_PATH" ]
+then
+    echo "    Error: \$PV_PLUGIN_PATH is unset."
+    exit 1
+fi
+
+# Ensure CMake gets the correct C/C++ compilers
+[ -n "$WM_CC" ] && export CC="$WM_CC"
+[ -n "$WM_CXX" ] && export CXX="$WM_CXX"
+
+wmake $targetType vtkPVblockMesh
+wmake $targetType vtkPVFoam
+
+if [ "$targetType" != "objects" ]
+then
+    if $WM_PROJECT_DIR/bin/tools/foamVersionCompare $ParaView_VERSION ge 5.7.0
+    then
+        (
+            mkdir -p Make/$WM_OPTIONS > /dev/null 2>&1
+            cd Make/$WM_OPTIONS
+            cmake ../..
+            make
+        )
+    else
+        (
+            cd PVblockMeshReader
+            mkdir -p Make/$WM_OPTIONS > /dev/null 2>&1
+            cd Make/$WM_OPTIONS
+            cmake ../..
+            make
+        )
+        (
+            cd PVFoamReader
+            mkdir -p Make/$WM_OPTIONS > /dev/null 2>&1
+            cd Make/$WM_OPTIONS
+            cmake ../..
+            make
+        )
+    fi
+fi
+
+# Remove the old $FOAM_LIBBIN/libvtkPV*.so libraries, so that they do not get
+# linked in preference to the new $PV_PLUGIN_PATH/libvtkPV*.so libraries
+rm -f $FOAM_LIBBIN/libvtkPV*
+
+#------------------------------------------------------------------------------
