@@ -5,9 +5,9 @@
 #+DATE:                     3rd January 2018
 #+LINK:                  http://openfoam.org
 #+OPTIONS: author:nil ^:{}
-# Copyright (c) 2015-2018 OpenFOAM Foundation.
+# Copyright (c) 2015-2018 OpenFOAM Foundation..
 
-* About OpenFOAM
+* About OpenFOAM 
   OpenFOAM is a free, open source computational fluid dynamics (CFD) software
   package released by the OpenFOAM Foundation. It has a large user base across
   most areas of engineering and science, from both commercial and academic
