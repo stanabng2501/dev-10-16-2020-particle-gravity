@@ -31,6 +31,7 @@ License
 #include "InterfaceCompositionPhaseChangePhaseSystem.H"
 #include "PopulationBalancePhaseSystem.H"
 #include "ThermalPhaseChangePhaseSystem.H"
+#include "EvaporationPhaseChangePhaseSystem.H"
 
 #include "addToRunTimeSelectionTable.H"
 
@@ -142,6 +143,28 @@ namespace Foam
         dictionary,
         thermalPhaseChangePopulationBalanceMultiphaseSystem
     );
+    
+       typedef
+       EvaporationPhaseChangePhaseSystem
+        <
+            PhaseTransferPhaseSystem
+            <
+                OneResistanceHeatTransferPhaseSystem
+                <
+                    MomentumTransferPhaseSystem<phaseSystem>
+                >
+            >
+        >
+        evaporationPhaseChangeMultiphaseSystem;
+
+    addNamedToRunTimeSelectionTable
+    (
+        phaseSystem,
+        evaporationPhaseChangeMultiphaseSystem,
+        dictionary,
+        evaporationPhaseChangeMultiphaseSystem
+    ); 
+    
 }
 
 
