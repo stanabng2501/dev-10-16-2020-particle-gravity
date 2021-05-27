@@ -492,7 +492,7 @@ Foam::tmp<Foam::volScalarField> Foam::heThermo<BasicThermo, MixtureType>::Se
 {
     return volScalarFieldProperty
     (
-        "S",
+        "Se",
         dimEnergy/(dimMass*dimTemperature),
         &MixtureType::cellThermoMixture,
         &MixtureType::patchFaceThermoMixture,
