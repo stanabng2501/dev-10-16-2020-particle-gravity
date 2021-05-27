@@ -181,7 +181,10 @@ public:
             //- Helmholtz free energy [J/kg]
             inline scalar A(const scalar p, const scalar T) const;
 
-
+          //- Entropy name Se to avoid conflict [J/kg-K]
+            inline scalar Se(const scalar p, const scalar T) const;
+            
+            
         // Mole specific derived properties
 
             //- Heat capacity at constant pressure [J/kmol/K]

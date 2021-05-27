@@ -274,6 +274,23 @@ public:
                 const labelList& cells
             ) const;
 
+
+          
+            //  entropy for given pressure and temperature [J/kg-K]
+            virtual tmp<volScalarField> Se
+            (
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
+            
+             //  gibbs free energy for given pressure and temperature [J/kg]
+            virtual tmp<volScalarField> G
+            (
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;           
+            
+            
             //- Enthalpy of formation [J/kg]
             virtual tmp<volScalarField> hc() const;
 

@@ -194,6 +194,8 @@ thermoMixtureFunction(Cpv)
 thermoMixtureFunction(gamma)
 thermoMixtureFunction(CpByCpv)
 thermoMixtureFunction(HE)
+thermoMixtureFunction(Se)
+thermoMixtureFunction(G)
 
 
 template<class ThermoType>

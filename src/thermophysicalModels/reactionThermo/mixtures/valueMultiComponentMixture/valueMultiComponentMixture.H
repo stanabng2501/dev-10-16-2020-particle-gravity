@@ -116,6 +116,14 @@ public:
             // Absolute enthalpy [J/kg]
             scalar Ha(const scalar p, const scalar T) const;
 
+            // entropy[J/kg-K]
+            scalar Se(const scalar p, const scalar T) const;
+
+
+            // gibbs free energy[J/kg]
+            scalar G(const scalar p, const scalar T) const;
+            
+            
             // Enthalpy of formation [J/kg]
             scalar Hf() const;
 
