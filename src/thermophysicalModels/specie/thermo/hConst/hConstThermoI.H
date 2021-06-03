@@ -141,7 +141,7 @@ inline Foam::scalar Foam::hConstThermo<EquationOfState>::S
     const scalar T
 ) const
 {
-    return Cp_*log(T/Tstd) + EquationOfState::Sp(p, T);
+    return Sref_+Cp_*log(T/Tstd) + EquationOfState::Sp(p, T);
 }
 
 
