@@ -314,24 +314,7 @@ public:
                 const scalarField& T,
                 const label patchi
             ) const = 0;
-            
-            
-           //  Entropy for given pressure and temperature [J/kg-K]
-            virtual tmp<volScalarField> Se
-            (
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
-            
 
-           //  Gibbs free energy for given pressure and temperature [J/kg]
-            virtual tmp<volScalarField> G
-            (
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
-            
-            
             //- Absolute enthalpy [J/kg]
             virtual tmp<volScalarField> ha() const = 0;
 

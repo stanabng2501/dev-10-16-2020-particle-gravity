@@ -57,6 +57,7 @@ Foam::heThermo<BasicThermo, MixtureType>::volScalarFieldProperty
             psiDim
         )
     );
+
     volScalarField& psi = tPsi.ref();
 
     forAll(this->T_, celli)
@@ -65,6 +66,7 @@ Foam::heThermo<BasicThermo, MixtureType>::volScalarFieldProperty
     }
 
     volScalarField::Boundary& psiBf = psi.boundaryFieldRef();
+
     forAll(psiBf, patchi)
     {
         fvPatchScalarField& pPsi = psiBf[patchi];
@@ -481,45 +483,6 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::ha
         this->p_.boundaryField()[patchi],
         T
     );
-}
-
-template<class BasicThermo, class MixtureType>
-Foam::tmp<Foam::volScalarField> Foam::heThermo<BasicThermo, MixtureType>::Se
-(
-    const volScalarField& p,
-    const volScalarField& T
-) const
-{
-    return volScalarFieldProperty
-    (
-        "Se",
-        dimEnergy/(dimMass*dimTemperature),
-        &MixtureType::cellThermoMixture,
-        &MixtureType::patchFaceThermoMixture,
-        &MixtureType::thermoMixtureType::Se,
-        p,
-        T
-    );
-}
-
-template<class BasicThermo, class MixtureType>
-Foam::tmp<Foam::volScalarField> Foam::heThermo<BasicThermo, MixtureType>::G
-(
-    const volScalarField& p,
-    const volScalarField& T
-) const
-{
-    return volScalarFieldProperty
-    (
-        "G",
-        dimEnergy/dimMass,
-        &MixtureType::cellThermoMixture,
-        &MixtureType::patchFaceThermoMixture,
-        &MixtureType::thermoMixtureType::G,
-        p,
-        T
-    );
-
 }
 
 

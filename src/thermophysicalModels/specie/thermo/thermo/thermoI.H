@@ -111,14 +111,6 @@ Foam::species::thermo<Thermo, Type>::A(const scalar p, const scalar T) const
     return this->Ea(p, T) - T*this->S(p, T);
 }
 
-template<class Thermo, template<class> class Type>
-inline Foam::scalar
-Foam::species::thermo<Thermo, Type>::Se(const scalar p, const scalar T) const
-{
-   return  this->S(p, T);
-}
-
-
 
 template<class Thermo, template<class> class Type>
 inline Foam::scalar
