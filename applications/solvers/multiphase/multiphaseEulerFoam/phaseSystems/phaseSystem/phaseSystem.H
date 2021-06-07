@@ -181,6 +181,8 @@ protected:
         //- Stabilisation for normalisation of the interface normal
         const dimensionedScalar deltaN_;
 
+        //- Phase System name
+        word phaseSystemName_;
 
         // Sub Models
 
@@ -650,6 +652,9 @@ public:
 
             //- Correct the fluid properties other than those listed below
             virtual void correct();
+            
+           //- Correct entropic variables          
+           virtual void correctEntropicV();
 
             //- Correct the continuity errors
             virtual void correctContinuityError();

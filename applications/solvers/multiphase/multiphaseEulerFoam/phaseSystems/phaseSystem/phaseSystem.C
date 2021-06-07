@@ -410,6 +410,11 @@ Foam::phaseSystem::phaseSystem
     (
         "deltaN",
         1e-8/pow(average(mesh_.V()), 1.0/3.0)
+    ),
+    
+    phaseSystemName_
+    (
+     lookup<word>("type")
     )
 {
     // Groupings
@@ -784,6 +789,13 @@ void Foam::phaseSystem::correctContinuityError()
     }
 }
 
+void Foam::phaseSystem::correctEntropicV()
+{
+   if (phaseSystemName_ == "evaporationPhaseChangeMultiphaseSystem")
+   {
+   this-> correctEntropicV();
+   } 
+}
 
 void Foam::phaseSystem::correctKinematics()
 {

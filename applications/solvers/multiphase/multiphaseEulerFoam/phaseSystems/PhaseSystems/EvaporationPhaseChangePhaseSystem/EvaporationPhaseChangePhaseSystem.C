@@ -28,7 +28,7 @@ License
 #include "fvcVolumeIntegrate.H"
 #include "fvmSup.H"
 #include "rhoReactionThermo.H"
-
+#include "heThermo.H"
 // * * * * * * * * * * * * Private Member Functions * * * * * * * * * * * * //
 
 template<class BasePhaseSystem>
@@ -127,7 +127,7 @@ EvaporationPhaseChangePhaseSystem
         );
 
 
-        H_.insert
+        H1_.insert
         (
             pair,
             new volScalarField
@@ -136,7 +136,7 @@ EvaporationPhaseChangePhaseSystem
                 (
                     IOobject::groupName
                     (
-                        "evaporationPhaseChange:H",
+                        "evaporationPhaseChange:H1",
                         pair.name()
                     ),
                     this->mesh().time().timeName(),
@@ -149,7 +149,28 @@ EvaporationPhaseChangePhaseSystem
             )
         );
 
-
+        H2_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "evaporationPhaseChange:H2",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::AUTO_WRITE
+                ),
+                this->mesh(),
+                dimensionedScalar(dimensionSet(1, -1, -3, -1, 0), 0)
+            )
+        );
+        
         L_.insert
         (
             pair,
@@ -168,10 +189,110 @@ EvaporationPhaseChangePhaseSystem
                     IOobject::AUTO_WRITE
                 ),
                 this->mesh(),
-                dimensionedScalar(dimensionSet(0, 2, -2, 0, 0), 0)
+                dimensionedScalar(dimensionSet(0, 2, -2, 0, 0), 0)  
             )
         );
+        
+        S1_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "evaporationPhaseChange:S1",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+           
+    
+              this->mesh() 
+            )
+        );   
+        
+         S2_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "evaporationPhaseChange:S2",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+              this->mesh()
+            )
+        );        
+        
+       G1_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "evaporationPhaseChange:G1",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                
+                this ->mesh()
+              )
+          );      
+          //    pair.phase1().thermo().G(pair.phase1().thermo().p(),pair.phase1().thermo().T())
+     
+     //           this->mesh(),
+     //           dimensionedScalar(dimensionSet(0, 2, -2, 0, 0), 0)
+      
+        
+        G2_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "evaporationPhaseChange:G2",
+                        pair.name()
+                    ),
+                      this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                
+                this ->mesh()
+              )
+          ); 
+       
+ 
+//      Info << "max pressure value is " <<max(pair.phase2().thermo().p().primitiveField()) << endl; 
+ //     Info << "max temperature  value is " <<max(pair.phase2().thermo().T().primitiveField()) << endl;
     }
+    
+    
+    
 }
 
 
@@ -183,7 +304,7 @@ Foam::EvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
 {}
 
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+// * * * * * * *Energy/dimMass * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class BasePhaseSystem>
 const Foam::saturationModel&
@@ -236,24 +357,31 @@ Foam::EvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
         const phaseModel& phase2 = pair.phase2();
         const rhoThermo& thermo1 = phase1.thermo();
         const rhoThermo& thermo2 = phase2.thermo();
+        const volScalarField& T1(thermo1.T());
         const volScalarField& T2(thermo2.T());
-
+        const volScalarField& G1(*this->G1_[pair]);
+        const volScalarField& G2(*this->G2_[pair]);
         // Interfacial mass transfer update
         {
-
+        
             volScalarField& dmdtf(*this->dmdtfs_[pair]);
             volScalarField L(this->L(pair, dmdtf, T2, latentHeatScheme::symmetric));
 
-            const volScalarField Tsat(saturationModelIter()->Tsat(thermo1.p()));
+            const volScalarField Tsat(saturationModelIter()->Tsat(thermo1.p()));  
+  //          Info << "-----------Calculating heat transfer model for phase -----------"<< pair.phase1().name()<<endl;
+            volScalarField H1(this->heatTransferModels_[pair].first()->K());
+  //          Info << "-----------Calculating heat transfer model for phase -----------"<< pair.phase2().name()<<endl; 
+            volScalarField H2(this->heatTransferModels_[pair].second()->K());
 
-
-             volScalarField H2(this->heatTransferModels_[pair]->K());
-             *H_[pair] = H2;
-             *L_[pair] = L;
-             volScalarField dmdtfNew(H2*(Tsat - T2)/L);
+            *H1_[pair] = H1;
+            *H2_[pair] = H2;
+            *L_[pair] = L;
+            volScalarField mulfac(neg(G1-G2));//+pos(G1-G2)); 
+            volScalarField dmdtfNew(mulfac*((H1*(Tsat - T1) + H2*(Tsat - T2))/L));
 
             // Limit the H[12] to avoid /0
-             H2.max(small);
+            H1.max(small);
+            H2.max(small);
 
 
             const scalar dmdtfRelax =
@@ -334,6 +462,48 @@ correctContinuityError()
 {
    // no continuity error yet bcoz no heat transfer
 }
+
+template<class BasePhaseSystem>
+void Foam::EvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
+correctInterfaceThermo()
+{
+   // no interface thermo to correct
+}
+
+template<class BasePhaseSystem>
+void Foam::EvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
+correctEntropicV()
+{
+//   Info<< "This is done once"<<endl;
+   
+       forAllConstIter
+    (
+        saturationModelTable,
+        saturationModels_,
+        saturationModelIter
+    )
+    {
+        const phasePair& pair = this->phasePairs_[saturationModelIter.key()];
+        const phaseModel& phase1 = pair.phase1();
+        const rhoThermo& thermo1 = phase1.thermo();
+        const volScalarField& T1(thermo1.T());
+        const volScalarField W(thermo1.W());
+        const volScalarField& p( thermo1.p());
+        volScalarField& G1(*this->G1_[pair]);
+        volScalarField& S1(*this->S1_[pair]);
+        //gas constant
+        const dimensionedScalar R(dimensionSet(1, 2, -2, -1, -1), 8314.62);
+        volScalarField R1(R/W);  
+        
+           
+        const volScalarField dS(-R1*log(p/p.oldTime()));
+        Info << "Min dS = "<< min(dS.primitiveField())<< "Max dS = "<< max(dS.primitiveField())<<endl; 
+        S1 =S1 + dS;
+        G1 = G1- T1*dS;
+    
+    }
+}
+
 
 
 template<class BasePhaseSystem>

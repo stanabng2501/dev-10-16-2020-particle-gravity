@@ -81,9 +81,20 @@ class EvaporationPhaseChangePhaseSystem
         //- Mass transfer rates
         phaseSystem::dmdtfTable dmdtfs_;
 
+        //Entropies 
+          phaseSystem::dmdtfTable S1_;
+          phaseSystem::dmdtfTable S2_;
+
+
+        //gibbs free energies
+          phaseSystem::dmdtfTable G1_;
+          phaseSystem::dmdtfTable G2_;
+          
+                    
         //- Heat transfer rates 
-        phaseSystem::dmdtfTable H_;
-        
+        phaseSystem::dmdtfTable H1_;
+         phaseSystem::dmdtfTable H2_;     
+           
         //- Latent heat
         phaseSystem::dmdtfTable L_;
 
@@ -134,9 +145,15 @@ public:
         //- Store phase dmdts at the during the continuity error update
         virtual void correctContinuityError();
 
-
+        //- Correct the interface thermodynamics
+        virtual void correctInterfaceThermo();
+        
+        
         //- Read base phaseProperties dictionary
         virtual bool read();
+        
+        //- Correct the entropic variables
+        virtual void correctEntropicV();
 };
 
 

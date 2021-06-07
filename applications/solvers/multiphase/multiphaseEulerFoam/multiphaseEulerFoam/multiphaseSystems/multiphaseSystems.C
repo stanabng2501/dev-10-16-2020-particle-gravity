@@ -149,7 +149,7 @@ namespace Foam
         <
             PhaseTransferPhaseSystem
             <
-                OneResistanceHeatTransferPhaseSystem
+                TwoResistanceHeatTransferPhaseSystem
                 <
                     MomentumTransferPhaseSystem<phaseSystem>
                 >
