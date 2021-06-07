@@ -97,9 +97,6 @@ class hConstThermo
 
         //- Reference sensible enthalpy around which to linearise [J/kg]
         scalar Hsref_;
-        
-        //- Reference entropy [J/kg-K]
-        scalar Sref_;
 
 
     // Private Member Functions

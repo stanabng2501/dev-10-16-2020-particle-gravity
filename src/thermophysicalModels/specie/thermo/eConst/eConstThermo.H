@@ -98,10 +98,7 @@ class eConstThermo
         //- Reference sensible enthalpy around which to linearise [J/kg]
         scalar Esref_;
 
-        //- Reference entropy [J/kg-K]
-        scalar Sref_;
-        
-        
+
     // Private Member Functions
 
         //- Construct from components

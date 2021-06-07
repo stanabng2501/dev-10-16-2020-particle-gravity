@@ -35,8 +35,7 @@ Foam::eConstThermo<EquationOfState>::eConstThermo(const dictionary& dict)
     Cv_(dict.subDict("thermodynamics").lookup<scalar>("Cv")),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
     Tref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Tref", Tstd)),
-    Esref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Esref", 0)),
-    Sref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Sref", 0))
+    Esref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Esref", 0))
 {}
 
 
