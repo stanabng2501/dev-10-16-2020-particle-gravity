@@ -54,6 +54,7 @@ wallLubricationModels/noWallLubrication/noWallLubrication.C
 wallLubricationModels/Antal/Antal.C
 wallLubricationModels/Frank/Frank.C
 wallLubricationModels/TomiyamaWallLubrication/TomiyamaWallLubrication.C
+wallLubricationModels/HosokawaWallLubrication/HosokawaWallLubrication.C
 
 turbulentDispersionModels/turbulentDispersionModel/turbulentDispersionModel.C
 turbulentDispersionModels/turbulentDispersionModel/turbulentDispersionModelNew.C
