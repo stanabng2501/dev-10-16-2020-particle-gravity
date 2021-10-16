@@ -789,13 +789,7 @@ void Foam::phaseSystem::correctContinuityError()
     }
 }
 
-void Foam::phaseSystem::correctEntropicV()
-{
-   if (phaseSystemName_ == "evaporationPhaseChangeMultiphaseSystem")
-   {
-   this-> correctEntropicV();
-   } 
-}
+ 
 
 void Foam::phaseSystem::correctKinematics()
 {

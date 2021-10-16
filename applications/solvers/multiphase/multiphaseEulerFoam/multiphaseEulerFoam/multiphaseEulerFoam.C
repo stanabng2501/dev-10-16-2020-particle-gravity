@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
                 fluid.correctTurbulence();
             }
         }
-        fluid.correctEntropicV();
+ 
         runTime.write();
 
         Info<< "ExecutionTime = "

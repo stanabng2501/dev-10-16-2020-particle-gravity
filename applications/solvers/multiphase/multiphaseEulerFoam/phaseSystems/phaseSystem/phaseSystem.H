@@ -653,8 +653,7 @@ public:
             //- Correct the fluid properties other than those listed below
             virtual void correct();
             
-           //- Correct entropic variables          
-           virtual void correctEntropicV();
+ 
 
             //- Correct the continuity errors
             virtual void correctContinuityError();
