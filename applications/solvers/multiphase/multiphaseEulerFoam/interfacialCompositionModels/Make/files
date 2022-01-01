@@ -13,6 +13,15 @@ interfaceCompositionModels/Henry/Henry.C
 interfaceCompositionModels/nonRandomTwoLiquid/nonRandomTwoLiquid.C
 interfaceCompositionModels/saturated/saturated.C
 
+
+
+bulkNucleationModels/bulkNucleationModel/bulkNucleationModel.C
+bulkNucleationModels/bulkNucleationModel/bulkNucleationModelNew.C
+bulkNucleationModels/Doring/Doring.C
+bulkNucleationModels/nucleationProperties/nucleationProperties.C
+
+
+
 saturationModels/saturationModel/saturationModel.C
 saturationModels/saturationModel/saturationModelNew.C
 saturationModels/Antoine/Antoine.C

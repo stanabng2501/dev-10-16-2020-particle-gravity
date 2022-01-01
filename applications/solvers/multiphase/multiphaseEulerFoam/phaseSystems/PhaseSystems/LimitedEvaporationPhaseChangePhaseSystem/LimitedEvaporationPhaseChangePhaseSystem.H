@@ -22,22 +22,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NucleationChangePhaseSystem
+    Foam::EvaporationChangePhaseSystem
 
 Description
-    Class to provide  mass transfer between a number of
-    phases according the nucleation theory
+    Class to provide interfacial heat and mass transfer between a number of
+    phases according the interfacial temperature approximated by the saturation
+    temperature.
 
 
 
 
 SourceFiles
-    NucleationPhaseChangePhaseSystem.C
+    EvaporationPhaseChangePhaseSystem.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef NucleationPhaseChangePhaseSystem_H
-#define NucleationPhaseChangePhaseSystem_H
+#ifndef LimitedEvaporationPhaseChangePhaseSystem_H
+#define LimitedEvaporationPhaseChangePhaseSystem_H
 
 #include "phaseSystem.H"
 #include "bulkNucleationModel.H"
@@ -53,7 +54,7 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 template<class BasePhaseSystem>
-class NucleationPhaseChangePhaseSystem
+class LimitedEvaporationPhaseChangePhaseSystem
 :
     public BasePhaseSystem
 {
@@ -64,7 +65,7 @@ class NucleationPhaseChangePhaseSystem
             autoPtr<bulkNucleationModel>,
             phasePairKey,
             phasePairKey::hash
-        > nucleationModelTable;
+        > saturationModelTable;
 
         using latentHeatScheme = typename BasePhaseSystem::latentHeatScheme;
 
@@ -74,8 +75,8 @@ class NucleationPhaseChangePhaseSystem
 
 
 
-        //- nucleation models used to evaluate Tsat = Tf
-        nucleationModelTable nucleationModels_;
+        //- Saturation models used to evaluate Tsat = Tf
+        saturationModelTable saturationModels_;
 
         //- Mass transfer rates
         phaseSystem::dmdtfTable dmdtfs_;
@@ -86,24 +87,25 @@ class NucleationPhaseChangePhaseSystem
 
         //- Sum the mass transfer rates for each phase into the given list
         void addDmdts(PtrList<volScalarField>&) const;
-
+        
+ 
 
 public:
 
     // Constructors
 
         //- Construct from fvMesh
-        NucleationPhaseChangePhaseSystem(const fvMesh&);
+        LimitedEvaporationPhaseChangePhaseSystem(const fvMesh&);
 
 
     //- Destructor
-    virtual ~NucleationPhaseChangePhaseSystem();
+    virtual ~LimitedEvaporationPhaseChangePhaseSystem();
 
 
     // Member Functions
 
-        //- Return the nucleationModel
-        const bulkNucleationModel& nucleation(const phasePairKey& key) const;
+        //- Return the saturationModel
+        const bulkNucleationModel& saturation(const phasePairKey& key) const;
 
         //- Return the mass transfer rate for an interface
         virtual tmp<volScalarField> dmdtf(const phasePairKey& key) const;
@@ -143,7 +145,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "NucleationPhaseChangePhaseSystem.C"
+    #include "LimitedEvaporationPhaseChangePhaseSystem.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

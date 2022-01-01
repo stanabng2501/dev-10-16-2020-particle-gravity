@@ -23,7 +23,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "NucleationPhaseChangePhaseSystem.H"
+#include "LimitedEvaporationPhaseChangePhaseSystem.H"
+#include "alphatPhaseChangeWallFunctionFvPatchScalarField.H"
 #include "fvcVolumeIntegrate.H"
 #include "fvmSup.H"
 #include "rhoReactionThermo.H"
@@ -31,7 +32,7 @@ License
 // * * * * * * * * * * * * Private Member Functions * * * * * * * * * * * * //
 
 template<class BasePhaseSystem>
-void Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::addDmdts
+void Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::addDmdts
 (
     PtrList<volScalarField>& dmdts
 ) const
@@ -54,8 +55,8 @@ void Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::addDmdts
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasePhaseSystem>
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
-NucleationPhaseChangePhaseSystem
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
+LimitedEvaporationPhaseChangePhaseSystem
 (
     const fvMesh& mesh
 )
@@ -64,20 +65,20 @@ NucleationPhaseChangePhaseSystem
 {
     this->generatePairsAndSubModels
     (
-        "nucleation",
-        nucleationModels_
+        "saturation",
+        saturationModels_
     );
 
     // Check that models have been specified in the correct combinations
     forAllConstIter
     (
-        nucleationModelTable,
-        nucleationModels_,
-        nucleationModelIter
+        saturationModelTable,
+        saturationModels_,
+        saturationModelIter
     )
     {
         const phasePair& pair =
-            this->phasePairs_[nucleationModelIter.key()];
+            this->phasePairs_[saturationModelIter.key()];
 
         if
         (
@@ -87,7 +88,7 @@ NucleationPhaseChangePhaseSystem
              FatalErrorInFunction
                  << "A heat transfer model for the " << pair
                  << "pair is not specified. This is required by the "
-                 << "corresponding nucleation model"
+                 << "corresponding saturation model"
                  << exit(FatalError);
         }
     }
@@ -95,13 +96,13 @@ NucleationPhaseChangePhaseSystem
     // Generate interfacial mass transfer fields, initially assumed to be zero
     forAllConstIter
     (
-        nucleationModelTable,
-        nucleationModels_,
-        nucleationModelIter
+        saturationModelTable,
+        saturationModels_,
+        saturationModelIter
     )
     {
         const phasePair& pair =
-            this->phasePairs_[nucleationModelIter.key()];
+            this->phasePairs_[saturationModelIter.key()];
 
         dmdtfs_.insert
         (
@@ -112,7 +113,7 @@ NucleationPhaseChangePhaseSystem
                 (
                     IOobject::groupName
                     (
-                        "nucleationPhaseChange:dmdtf",
+                        "limitedEvaporationPhaseChange:dmdtf",
                         pair.name()
                     ),
                     this->mesh().time().timeName(),
@@ -125,7 +126,6 @@ NucleationPhaseChangePhaseSystem
             )
         );
 
- 
     }
     
     
@@ -136,8 +136,8 @@ NucleationPhaseChangePhaseSystem
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 template<class BasePhaseSystem>
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
-~NucleationPhaseChangePhaseSystem()
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
+~LimitedEvaporationPhaseChangePhaseSystem()
 {}
 
 
@@ -145,18 +145,18 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
 
 template<class BasePhaseSystem>
 const Foam::bulkNucleationModel&
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::nucleation
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::saturation
 (
     const phasePairKey& key
 ) const
 {
-    return nucleationModels_[key];
+    return saturationModels_[key];
 }
 
 
 template<class BasePhaseSystem>
 Foam::tmp<Foam::volScalarField>
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdtf
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdtf
 (
     const phasePairKey& key
 ) const
@@ -178,25 +178,40 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdtf
 
 template<class BasePhaseSystem>
 Foam::PtrList<Foam::volScalarField>
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
 {
 
    /// calculating dmdtfs_
     forAllConstIter
     (
-        nucleationModelTable,
-        nucleationModels_,
-        nucleationModelIter
+        saturationModelTable,
+        saturationModels_,
+        saturationModelIter
     )
     {
-          const phasePair& pair = this->phasePairs_[nucleationModelIter.key()];
- 
+        const phasePair& pair = this->phasePairs_[saturationModelIter.key()];
+        const phaseModel& phase1 = pair.phase1();
+        const phaseModel& phase2 = pair.phase2();
+        const rhoThermo& thermo1 = phase1.thermo();
+        const rhoThermo& thermo2 = phase2.thermo();
+        const volScalarField& T1(thermo1.T());
+        const volScalarField& T2(thermo2.T());
 
         // Interfacial mass transfer update
         {
-        
-            volScalarField& dmdtf(*this->dmdtfs_[pair]); 
- 
+ //           Info << "---------------------------------------------------------------------------------------------" <<endl;            
+            volScalarField& dmdtf(*this->dmdtfs_[pair]);
+            volScalarField L(this->L(pair, dmdtf, T2, latentHeatScheme::symmetric));
+
+            const volScalarField Tsat(saturationModelIter()->Tsat(thermo1.p()));  
+            const volScalarField WcrkTN(saturationModelIter()->calcWcrkTN( ));   
+            volScalarField H1(this->heatTransferModels_[pair].first()->K());
+            volScalarField H2(this->heatTransferModels_[pair].second()->K());
+
+            // Limit the H[12] to avoid /0
+            H1.max(small);
+            H2.max(small);
+
             volScalarField dmdtfNew 
                              (
                                 IOobject
@@ -210,23 +225,62 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                                  this->mesh(),
                                  dimensionedScalar( dmdtf.dimensions(), 0.0)     
                               );
-    
-                
-             dmdtfNew  +=  nucleationModelIter()->dmdts2to1(dmdtfNew);
-
+                              
+            volScalarField meshVol  
+             (
+               IOobject
+                (
+                 "meshVol",
+                 this->mesh().time().timeName(),
+                 this->mesh(),
+                 IOobject::NO_READ,
+                 IOobject::NO_WRITE
+                ),
+              this->mesh(),
+              dimensionedScalar( dimVolume, small)     
+             );
+            meshVol.ref() =    phase1().mesh().V(); 
+         
+            const  scalar& WcrkTNmin(saturationModelIter()->WcrkTNmin());
+            label  ncvs  = 0;
+            scalar nucvol = 0.0;                            
+            forAll(dmdtfNew, celli)
+             {     
+               if(WcrkTN[celli] > WcrkTNmin ) 
+               {
+                 dmdtfNew[celli] = (H1[celli]*(Tsat[celli] - T1[celli]) + H2[celli]*(Tsat[celli] - T2[celli]))/L[celli];   
+                 ++ ncvs ;
+                 nucvol += meshVol[celli];     
+                }
+              }
+                                                             
             const scalar dmdtfRelax =
                 this->mesh().fieldRelaxationFactor(dmdtf.member());
 
-            dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
-
+             dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
+  
+           Info << "Total Nucleating CV's = " << ncvs 
+                << ",  Total nucleating volume = " << nucvol 
+                << endl;
+ /*
+           Info << "WcrkTN   min = " << min(WcrkTN.primitiveField())
+                << ", WcrkTN   max = " << max(WcrkTN.primitiveField())
+                <<endl;
                 
+             Info<< "Latent Heat  min = " << min(L.primitiveField())
+                 << ", mean = " << average(L.primitiveField())
+                 << ", max = " << max(L.primitiveField())
+                 << endl;
                 
+ */               
             Info<< dmdtf.name()
                 << ": min = " << min(dmdtf.primitiveField())
                 << ", mean = " << average(dmdtf.primitiveField())
                 << ", max = " << max(dmdtf.primitiveField())
-                << ", integral = " << fvc::domainIntegrate(dmdtf).value()
+                << ", sum = " << sum (dmdtf.primitiveField()) //fvc::domainIntegrate(dmdtf).value()
                 << endl;
+                
+//            Info << "---------------------------------------------------------------------------------------------" <<endl;    
         }
      }
 
@@ -239,7 +293,7 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
 
 template<class BasePhaseSystem>
 Foam::autoPtr<Foam::phaseSystem::momentumTransferTable>
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
 momentumTransfer()
 {
     autoPtr<phaseSystem::momentumTransferTable> eqnsPtr =
@@ -255,7 +309,7 @@ momentumTransfer()
 
 template<class BasePhaseSystem>
 Foam::autoPtr<Foam::phaseSystem::momentumTransferTable>
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
 momentumTransferf()
 {
     autoPtr<phaseSystem::momentumTransferTable> eqnsPtr =
@@ -273,7 +327,7 @@ momentumTransferf()
 
 template<class BasePhaseSystem>
 Foam::autoPtr<Foam::phaseSystem::specieTransferTable>
-Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::specieTransfer() const
+Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::specieTransfer() const
 {
 
     autoPtr<phaseSystem::specieTransferTable> eqnsPtr =
@@ -289,14 +343,14 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::specieTransfer() const
 
 
 template<class BasePhaseSystem>
-void Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
+void Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
 correctContinuityError()
 {
    // no continuity error yet bcoz no heat transfer
 }
 
 template<class BasePhaseSystem>
-void Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
+void Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::
 correctInterfaceThermo()
 {
    // no interface thermo to correct
@@ -307,7 +361,7 @@ correctInterfaceThermo()
 
 
 template<class BasePhaseSystem>
-bool Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::read()
+bool Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::read()
 {
     if (BasePhaseSystem::read())
     {
