@@ -1,4 +1,4 @@
 phase/phase.C
 alphaContactAngle/alphaContactAngleFvPatchScalarField.C
 multiphaseEmulsionMix.C
-LIB = $(FOAM_USER_LIBBIN)/libmultiphaseEmulsionMix
+LIB = $(FOAM_LIBBIN)/libmultiphaseEmulsionMix
