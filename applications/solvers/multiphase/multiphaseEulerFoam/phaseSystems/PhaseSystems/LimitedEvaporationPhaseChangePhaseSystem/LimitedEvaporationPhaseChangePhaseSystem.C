@@ -29,6 +29,7 @@ License
 #include "fvmSup.H"
 #include "rhoReactionThermo.H"
 #include "heThermo.H"
+// #include "fvcDdt.H"
 // * * * * * * * * * * * * Private Member Functions * * * * * * * * * * * * //
 
 template<class BasePhaseSystem>
@@ -196,10 +197,12 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
         const rhoThermo& thermo2 = phase2.thermo();
         const volScalarField& T1(thermo1.T());
         const volScalarField& T2(thermo2.T());
+  //      const volScalarField  dpdt =  fvc::ddt(phase1.thermo().p()); 
+  //     const volScalarField&  dpdt(phase1.fluid().dpdt());
 
         // Interfacial mass transfer update
         {
- //           Info << "---------------------------------------------------------------------------------------------" <<endl;            
+            Info << "---------------------------------------------------------------------------------------------" <<endl;            
             volScalarField& dmdtf(*this->dmdtfs_[pair]);
             volScalarField L(this->L(pair, dmdtf, T2, latentHeatScheme::symmetric));
 
@@ -211,7 +214,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             // Limit the H[12] to avoid /0
             H1.max(small);
             H2.max(small);
-
+/*
             volScalarField dmdtfNew 
                              (
                                 IOobject
@@ -225,7 +228,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                                  this->mesh(),
                                  dimensionedScalar( dmdtf.dimensions(), 0.0)     
                               );
-                              
+ */                             
             volScalarField meshVol  
              (
                IOobject
@@ -242,37 +245,66 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             meshVol.ref() =    phase1().mesh().V(); 
          
             const  scalar& WcrkTNmin(saturationModelIter()->WcrkTNmin());
+            const  scalar& WcrFrac(saturationModelIter()->WcrFrac());
+ 
+            scalar   WcrLimit; 
+                        
+ //           const scalar dpdtvalue =  (1-dpdtLim ) * min(dpdt.primitiveField()) ;
+            const scalar dmdtfRelaxAdd =
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition"); 
+
+
+            const scalar dmdtfRelaxRem =
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal");                 
+         // setting Wcr Limits
+           if(WcrFrac <1)
+             {
+                WcrLimit  =max( WcrkTNmin , (1-WcrFrac)*max(WcrkTN.primitiveField()) ) ;
+             }
+             
+           else
+             {
+               WcrLimit = WcrkTNmin;
+             }                     
+            
             label  ncvs  = 0;
-            scalar nucvol = 0.0;                            
-            forAll(dmdtfNew, celli)
+            scalar nucvol = 0.0; 
+            scalar dmdtfNewVal = 0.0;                            
+            forAll(dmdtf, celli)
              {     
-               if(WcrkTN[celli] > WcrkTNmin ) 
+               if(WcrkTN[celli] > WcrLimit ) 
                {
-                 dmdtfNew[celli] = (H1[celli]*(Tsat[celli] - T1[celli]) + H2[celli]*(Tsat[celli] - T2[celli]))/L[celli];   
+               
+                 dmdtfNewVal =  (H1[celli]*(Tsat[celli] - T1[celli]) + H2[celli]*(Tsat[celli] - T2[celli]))/L[celli]; 
+                 dmdtf[celli] = (1 - dmdtfRelaxAdd)*dmdtf[celli] + dmdtfRelaxAdd*dmdtfNewVal;  
                  ++ ncvs ;
                  nucvol += meshVol[celli];     
                 }
+                
+                else
+                {
+                  dmdtf[celli]  = dmdtfRelaxRem*dmdtf[celli];
+                }
               }
                                                              
-            const scalar dmdtfRelax =
-                this->mesh().fieldRelaxationFactor(dmdtf.member());
-
-             dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
+            
+   //          dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
   
            Info << "Total Nucleating CV's = " << ncvs 
                 << ",  Total nucleating volume = " << nucvol 
                 << endl;
- /*
+ 
            Info << "WcrkTN   min = " << min(WcrkTN.primitiveField())
                 << ", WcrkTN   max = " << max(WcrkTN.primitiveField())
-                <<endl;
+                << ", Wcr Limit = " << WcrLimit
+                << endl;
                 
              Info<< "Latent Heat  min = " << min(L.primitiveField())
                  << ", mean = " << average(L.primitiveField())
                  << ", max = " << max(L.primitiveField())
                  << endl;
                 
- */               
+                 
             Info<< dmdtf.name()
                 << ": min = " << min(dmdtf.primitiveField())
                 << ", mean = " << average(dmdtf.primitiveField())
@@ -280,7 +312,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 << ", sum = " << sum (dmdtf.primitiveField()) //fvc::domainIntegrate(dmdtf).value()
                 << endl;
                 
-//            Info << "---------------------------------------------------------------------------------------------" <<endl;    
+            Info << "---------------------------------------------------------------------------------------------" <<endl;    
         }
      }
 

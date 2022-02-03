@@ -64,6 +64,9 @@ class bulkNucleationModel
         //- Critical work limit per molecule min max
         const scalar WcrktNmin_;
 
+
+        //- Depressurization Limit below which nucleation will happen
+        const scalar WcrFrac_;
         //- Mean Sauter Diameter of nucleating volume
          const scalar D32_;
          
@@ -142,13 +145,15 @@ public:
               ) const;
  
  
-         //- Saturation temperature
+         //- Minimum Critical work
              tmp<volScalarField> calcWcrkTN
               (
               
               ) const;
               
-              
+ 
+          //-Depressurisation Limit
+            scalar WcrFrac () const;             
                 
          // return mass transfer from liquid too gas
          tmp<Foam::volScalarField> dmdts2to1

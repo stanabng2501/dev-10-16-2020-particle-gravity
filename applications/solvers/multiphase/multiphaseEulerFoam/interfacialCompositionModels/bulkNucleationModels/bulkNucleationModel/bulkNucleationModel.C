@@ -49,6 +49,7 @@ Foam::bulkNucleationModel::bulkNucleationModel
 :
     pair_(pair),
     WcrktNmin_(dict.lookup<scalar>("WcrktNmin")),
+    WcrFrac_(dict.lookup<scalar>("WcrFrac")),
     D32_(dict.lookupOrDefault<scalar>("D32",1e-4)),   
     pSat_
     (
@@ -250,8 +251,8 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
            
     volScalarField rc((2*sigma)/ ( (1-(rho1/rho2))* (pSat_-p))); 
  
- //   Info<< "p min = " << min(p.primitiveField()) << ",  p max = " << max(p.primitiveField())  <<endl;  
-//    Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
+     Info<< "p min = " << min(p.primitiveField()) << ",  p max = " << max(p.primitiveField())  <<endl;  
+     Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
      forAll(rc, celli)
     { 
         if(rc[celli] < 0) 
@@ -261,7 +262,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
         }    
     }
     
-//   Info<< "rc   min = " << min(rc.primitiveField()) << ",  rc   max = " << max(rc.primitiveField()) <<endl;
+   Info<< "rc   min = " << min(rc.primitiveField()) << ",  rc   max = " << max(rc.primitiveField()) <<endl;
    volScalarField Wcr (4*constant::mathematical::pi*sqr(rc)*sigma/3);      
    volScalarField Nc((4/3)*constant::mathematical::pi*pow(rc,3)*rho1*(1000/thermo1.W())*Av);          
     return (Wcr/(Nc*k*T1));
@@ -273,4 +274,9 @@ Foam::scalar Foam::bulkNucleationModel::WcrkTNmin( ) const
     return WcrktNmin_;
 }
 
+
+Foam::scalar Foam::bulkNucleationModel::WcrFrac( ) const
+{
+    return WcrFrac_;
+}
 // ************************************************************************* //
