@@ -295,7 +295,8 @@ Foam::multiphaseEmulsionMix::surfaceTensionForce() const
 }
 
 
-void Foam::multiphaseEmulsionMix::solve()
+void Foam::multiphaseEmulsionMix::solve(const volScalarField alphac,
+                                        const surfaceScalarField alphaPhic)
 {
     correct();
 
@@ -329,7 +330,7 @@ void Foam::multiphaseEmulsionMix::solve()
             !(++alphaSubCycle).end();
         )
         {
-            solveAlphas(cAlpha);
+            solveAlphas(cAlpha, alphac,alphaPhic);
             rhoPhiSum += (runTime.deltaT()/totalDeltaT)*rhoPhi_;
         }
 
@@ -337,7 +338,7 @@ void Foam::multiphaseEmulsionMix::solve()
     }
     else
     {
-        solveAlphas(cAlpha);
+        solveAlphas(cAlpha, alphac,alphaPhic);
     }
 
     // Update the mixture kinematic viscosity
@@ -541,7 +542,9 @@ Foam::multiphaseEmulsionMix::nearInterface() const
 
 void Foam::multiphaseEmulsionMix::solveAlphas
 (
-    const scalar cAlpha
+    const scalar cAlpha,
+    const volScalarField alphac,
+    const surfaceScalarField alphaPhic
 )
 {
     static label nSolves=-1;
@@ -550,7 +553,8 @@ void Foam::multiphaseEmulsionMix::solveAlphas
     word alphaScheme("div(phi,alpha)");
     word alpharScheme("div(phirb,alpha)");
 
-    surfaceScalarField phic(mag(phi_/mesh_.magSf()));
+    //surfaceScalarField phic(mag(phi_/mesh_.magSf()));
+    surfaceScalarField phic(mag(alphaPhic/mesh_.magSf()));
     phic = min(cAlpha*phic, max(phic));
 
     UPtrList<const volScalarField> alphas(phases_.size());
@@ -560,9 +564,9 @@ void Foam::multiphaseEmulsionMix::solveAlphas
     forAllIter(PtrDictionary<phase>, phases_, iter)
     {
         const phase& alpha = iter();
-
+      //  const volScalarField& alpha1 = iter();
+      //  alphas.set(phasei, &alpha1);
         alphas.set(phasei, &alpha);
-
         alphaPhis.set
         (
             phasei,
@@ -571,21 +575,24 @@ void Foam::multiphaseEmulsionMix::solveAlphas
                 "phi" + alpha.name() + "Corr",
                 fvc::flux
                 (
-                    phi_,
+                    //phi_,
+                    //alphac*alpha1,
+                    alphaPhic,
                     alpha,
                     alphaScheme
                 )
             )
         );
-
         surfaceScalarField& alphaPhi = alphaPhis[phasei];
+
+
 
         forAllIter(PtrDictionary<phase>, phases_, iter2)
         {
             phase& alpha2 = iter2();
-
             if (&alpha2 == &alpha) continue;
 
+            // surfaceScalarField phir(phic*nHatf(alpha, alpha2));
             surfaceScalarField phir(phic*nHatf(alpha, alpha2));
 
             alphaPhi += fvc::flux
@@ -596,15 +603,18 @@ void Foam::multiphaseEmulsionMix::solveAlphas
             );
         }
 
+        volScalarField divU (fvc::div(alphaPhic));
         // Limit alphaPhi for each phase
         MULES::limit
         (
             1.0/mesh_.time().deltaT().value(),
             geometricOneField(),
+            //alphac,
+            //alpha,
             alpha,
             phi_,
             alphaPhi,
-            zeroField(),
+            divU,
             zeroField(),
             oneField(),
             zeroField(),
@@ -636,12 +646,17 @@ void Foam::multiphaseEmulsionMix::solveAlphas
     {
         phase& alpha = iter();
         surfaceScalarField& alphaPhi = alphaPhis[phasei];
+        volScalarField divU (fvc::div(alphaPhic));
 
         MULES::explicitSolve
         (
+            //alphac,
             geometricOneField(),
             alpha,
-            alphaPhi
+            alphaPhi,
+            divU,
+            // zeroField(),
+            zeroField()
         );
 
         rhoPhi_ += alphaPhi*alpha.rho();
@@ -651,7 +666,6 @@ void Foam::multiphaseEmulsionMix::solveAlphas
             << ' ' << min(alpha).value()
             << ' ' << max(alpha).value()
             << endl;
-      //      Info << alpha<<endl;
 
         sumAlpha += alpha;
 
@@ -664,7 +678,7 @@ void Foam::multiphaseEmulsionMix::solveAlphas
         << ' ' << max(sumAlpha).value()
         << endl;
     // Correct the sum of the phase-fractions to avoid 'drift'
-    volScalarField sumCorr(1.0 - sumAlpha);
+    volScalarField sumCorr(1 - sumAlpha);
     forAllIter(PtrDictionary<phase>, phases_, iter)
     {
         phase& alpha = iter();

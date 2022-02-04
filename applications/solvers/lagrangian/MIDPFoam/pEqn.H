@@ -8,6 +8,7 @@
         (
            fvc::flux(HbyASp)
         +fvc::interpolate(alphac*rho*rASpUc)*fvc::ddtCorr(U, phi, Uf)
+
         )
     );
 
@@ -18,11 +19,14 @@
         fvc::makeAbsolute(phiHbyASp, U);
     }
 
-   phicSUSu = 
+   phicSUSu =
    fvc::flux(rASpUc*cloudSUu)+
    (
-        mixture.surfaceTensionForce()
-        -ghf*fvc::snGrad(rho)
+       mixture.surfaceTensionForce()*alphacf
+        // mixture.surfaceTensionForce()
+         -ghf*fvc::snGrad(alphaRhoc)
+        // -ghf*fvc::snGrad(rho)
+        // -ghf*fvc::snGrad(rho)*alphacf
       )*rASpUcf*mesh.magSf();
 
 
@@ -32,6 +36,14 @@
     // Non-orthogonal pressure corrector loop
     while (pimple.correctNonOrthogonal())
     {
+        // fvScalarMatrix p_rghEqn
+        // (
+        //     fvm::laplacian(alphaRhocf*rASpUcf, p_rgh)
+        //  ==
+        //   fvc::ddt(alphaRhoc)
+        //    +fvc::div(alphaRhocf*phiHbyASp)
+        // );
+
         fvScalarMatrix p_rghEqn
         (
             fvm::laplacian(alphacf*rASpUcf, p_rgh)
@@ -39,12 +51,20 @@
           fvc::ddt(alphac)
            +fvc::div(alphacf*phiHbyASp)
         );
+
+
         p_rghEqn.setReference(pRefCell, getRefCellValue(p_rgh, pRefCell));
 
         p_rghEqn.solve();
+
+
+
         if (pimple.finalNonOrthogonalIter())
         {
+            // phi = phiHbyASp - p_rghEqn.flux()/alphaRhocf;
             phi = phiHbyASp - p_rghEqn.flux()/alphacf;
+
+
 
             // Explicitly relax pressure for momentum corrector
             p_rgh.relax();
@@ -54,7 +74,9 @@
               + rAUc
                *fvc::reconstruct
                 (
-                    (phicSUSu + phicSUSp*phi - p_rghEqn.flux()/alphacf)/rASpUcf
+                     // (phicSUSu + phicSUSp*phi - p_rghEqn.flux()/alphaRhocf)/rASpUcf
+                   (phicSUSu + phicSUSp*phi - p_rghEqn.flux()/alphacf)/rASpUcf
+
                 );
             U.correctBoundaryConditions();
 
@@ -63,15 +85,18 @@
 
           }
         }
+
+
+
             #include "continuityErrs.H"
 
             // Correct Ucf if the mesh is moving
-            fvc::correctUf(Uf, U, phi);
+            fvc::correctUf(Uf, U, alphaPhic);
 
             // Make the fluxes relative to the mesh motion
-            fvc::makeRelative(phi, U);
+            fvc::makeRelative(alphaPhic, U);
 
-            p == p_rgh + rho*gh;
+            p == p_rgh + alphaRhoc*gh;
 
               if (p_rgh.needReference())
               {
@@ -81,7 +106,7 @@
                       p.dimensions(),
                       pRefValue - getRefCellValue(p, pRefCell)
                   );
-                 p_rgh = p - rho*gh;
+                 p_rgh = p -alphaRhoc*gh;
               }
 
         }

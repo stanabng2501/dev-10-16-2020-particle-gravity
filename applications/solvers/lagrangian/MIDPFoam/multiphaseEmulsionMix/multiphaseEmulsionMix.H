@@ -139,7 +139,6 @@ private:
         const fvMesh& mesh_;
         const volVectorField& U_;
         const surfaceScalarField& phi_;
-
         surfaceScalarField rhoPhi_;
         volScalarField alphas_;
 
@@ -159,7 +158,12 @@ private:
 
         void calcAlphas();
 
-        void solveAlphas(const scalar cAlpha);
+        void solveAlphas
+        (
+        const scalar cAlpha,
+        const volScalarField alphac,
+        const surfaceScalarField alphaPhic
+        );
 
         tmp<surfaceVectorField> nHatfv
         (
@@ -256,7 +260,8 @@ public:
         tmp<volScalarField> nearInterface() const;
 
         //- Solve for the mixture phase-fractions
-        void solve();
+        void solve(const volScalarField alphac,
+        const surfaceScalarField alphaPhic);
 
         //- Correct the mixture properties
         void correct();

@@ -1,9 +1,9 @@
 CorrectPhi
 (
     U,
-    phic,
+    phi,
     p_rgh,
-    dimensionedScalar("rAspUcf", dimTime, 1),
+    dimensionedScalar("rAUf", dimTime, 1),
     geometricZeroField(),
     pimple,
     true

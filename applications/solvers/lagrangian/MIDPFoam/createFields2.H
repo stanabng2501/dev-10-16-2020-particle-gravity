@@ -117,7 +117,7 @@ surfaceScalarField alphacf("alphacf", fvc::interpolate(alphac));
 surfaceScalarField alphaPhic
 (
     "alphaPhic",
-    linearInterpolate(U*alphac) & mesh.Sf()
+    alphacf*phi
 );
 
 
@@ -130,7 +130,7 @@ volScalarField alphaRhoc
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
     ),
-    alphac*rho
+    rho*alphac
 );
 
 
@@ -187,7 +187,7 @@ volScalarField p
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
     ),
-    p_rgh + alphaRhoc*gh
+    p_rgh + rho*gh
 );
 
 
@@ -211,7 +211,7 @@ if (p_rgh.needReference())
         p.dimensions(),
         pRefValue - getRefCellValue(p, pRefCell)
     );
-   p_rgh = p - alphaRhoc*gh;
+   p_rgh = p - rho*gh;
 
 }
 

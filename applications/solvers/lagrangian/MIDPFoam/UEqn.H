@@ -1,6 +1,6 @@
-alphaRhoc = rho*alphac;
+alphaRhoc = alphac*mixture.rho();
 alphaRhocf = fvc::interpolate(alphaRhoc);
- alphaRhoPhic = alphacf*mixture.rhoPhi();
+alphaRhoPhic = alphacf*mixture.rhoPhi();
 
 fvVectorMatrix UEqn
 (
@@ -9,7 +9,8 @@ fvVectorMatrix UEqn
   + turbulence->divDevTau(alphaRhoc,U)
   ==
      cloudSU
-);
+     +fvOptions(alphaRhoc,U)
+   );
 UEqn.relax();
 
 fvOptions.constrain(UEqn);
@@ -38,8 +39,11 @@ if (pimple.momentumPredictor())
         (
         (phicSUSu + phicSUSp*phi)/rASpUcf
       + (
-            mixture.surfaceTensionForce()
-          - ghf*fvc::snGrad(rho)
+            mixture.surfaceTensionForce()*alphacf
+            // mixture.surfaceTensionForce()
+           -ghf*fvc::snGrad(alphaRhoc)
+           //-ghf*fvc::snGrad(rho)
+          // -ghf*fvc::snGrad(rho)*alphacf
           - fvc::snGrad(p_rgh)
         )*mesh.magSf()
         )

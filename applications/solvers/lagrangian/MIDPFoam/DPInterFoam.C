@@ -80,7 +80,7 @@ namespace Foam
 
 // #include "singlePhaseTransportModel.H"
 
-// Introduce multiphase mixture model. May 18th, 2022
+// Coupling with multiphase mixture model. May 18th, 2022
 #include "multiphaseEmulsionMix.H"
 #include "kinematicMomentumTransportModel.H"
 #include "pimpleControl.H"
@@ -93,21 +93,19 @@ namespace Foam
 int main(int argc, char *argv[])
 {
     #include "postProcess.H"
-
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
     #include "initContinuityErrs.H"
     #include "createDyMControls.H"
     #include "createFields.H"
-    #include "initCorrectPhi.H"
+    // #include "initCorrectPhi.H"
     #include "createUcfIfPresent.H"
 
     turbulence->validate();
     //July 31, 2021
     #include "CourantNo.H"
     #include "setInitialDeltaT.H"
-
     Info<< "\nStarting time loop\n" << endl;
 
     while (pimple.run(runTime))
@@ -127,13 +125,11 @@ int main(int argc, char *argv[])
 
         mu = mixture.mu();
         clouds.evolve();
-
         // Update continuous phase volume fraction field
         alphac = max(1.0 - clouds.theta(), alphacMin);
         alphac.correctBoundaryConditions();
         alphacf = fvc::interpolate(alphac);
-        alphaRhoPhic = alphacf*mixture.rhoPhi();
-        alphaPhic = alphacf*phi;
+        alphaPhic =linearInterpolate(U*alphac) & mesh.Sf();
 
         // Cloud forces
         fvVectorMatrix cloudSU(clouds.SU(U));
@@ -203,16 +199,10 @@ int main(int argc, char *argv[])
         {
           // Introduce the mixture fucntion to solve the multi-fluids system.
           //May 20th, 2022
-        //  Info<<alphac<<endl;
-        // Info<<"HI1"<<endl;
+          mixture.solve(alphac,alphaPhic);
 
-          mixture.solve();
-           // Info<<"HI2"<<endl;
+           rho = mixture.rho();
 
-          rho = mixture.rho();
-          // Info<<"HI3"<<endl;
-
-        //  Info << rho <<endl;
             #include "UEqn.H"
             // --- PISO loop
             while (pimple.correct())
