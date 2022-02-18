@@ -42,6 +42,8 @@ heatTransferModels/Alesksandrov/Alesksandrov.C
 heatTransferModels/Gunn/Gunn.C
 heatTransferModels/sphericalHeatTransfer/sphericalHeatTransfer.C
 heatTransferModels/timeScaleFilteredHeatTransfer/timeScaleFilteredHeatTransfer.C
+heatTransferModels/constantNuLimited/constantNuLimitedHeatTransfer.C
+heatTransferModels/noHeatTransfer/noHeatTransfer.C
 
 virtualMassModels/virtualMassModel/virtualMassModel.C
 virtualMassModels/virtualMassModel/virtualMassModelNew.C
