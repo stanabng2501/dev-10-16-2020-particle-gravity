@@ -51,16 +51,9 @@ Foam::bulkNucleationModel::bulkNucleationModel
     WcrktNmin_(dict.lookup<scalar>("WcrktNmin")),
     WcrFrac_(dict.lookup<scalar>("WcrFrac")),
     D32_(dict.lookupOrDefault<scalar>("D32",1e-4)),   
-    pSat_
-    (
-       dimensionedScalar::lookupOrDefault
-       (
-          "pSat",
-           dict,
-           dimPressure,
-           1e5
-        )
-     ), 
+    pSat_("pSat", dimPressure, dict),  
+    rhoVSat_("rhoVSat", dimDensity, dict),     
+    rhoLSat_("rhoLSat", dimDensity, dict),     
     saturationModel_
     (
         saturationModel::New
@@ -83,7 +76,7 @@ Foam::bulkNucleationModel::~bulkNucleationModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
+// This has many errors
 Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarField& dmdtf ) const
 {
 
@@ -122,7 +115,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarFi
     const volScalarField pSat(saturationModel_->pSat(T1));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
- 
+
 
     
     volScalarField L(thermo1.ha()-thermo2.ha());
@@ -226,15 +219,17 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
     return saturationModel_->Tsat(p);
 }
 
+
+// This is fixed
  Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::calcWcrkTN( ) const
 {
-    const phaseModel& phase1 = pair_.phase1();
+     const phaseModel& phase1 = pair_.phase1();
      const phaseModel& phase2 = pair_.phase2();
      const rhoThermo& thermo1 = phase1.thermo();
      const rhoThermo& thermo2 = phase2.thermo();
-          const volScalarField& T1(thermo1.T());
+     const volScalarField& T1(thermo1.T());
      const volScalarField& rho1(thermo1.rho());
-     const volScalarField& rho2(thermo2.rho());
+ //    const volScalarField& rho2(thermo2.rho());
      const volScalarField& p(thermo1.p());
      const volScalarField sigma
                      (
@@ -246,13 +241,12 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
  
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
- 
       
            
-    volScalarField rc((2*sigma)/ ( (1-(rho1/rho2))* (pSat_-p))); 
+    volScalarField rc((2*sigma)/ ( (1-(rhoVSat_/rhoLSat_))* (pSat_-p))); 
  
-     Info<< "p min = " << min(p.primitiveField()) << ",  p max = " << max(p.primitiveField())  <<endl;  
-     Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
+    Info<< "p min = " << min(p.primitiveField()) << ",  p max = " << max(p.primitiveField())  <<endl;  
+    Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
      forAll(rc, celli)
     { 
         if(rc[celli] < 0) 
@@ -264,7 +258,17 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
     
    Info<< "rc   min = " << min(rc.primitiveField()) << ",  rc   max = " << max(rc.primitiveField()) <<endl;
    volScalarField Wcr (4*constant::mathematical::pi*sqr(rc)*sigma/3);      
-   volScalarField Nc((4/3)*constant::mathematical::pi*pow(rc,3)*rho1*(1000/thermo1.W())*Av);          
+   
+     volScalarField Nc(
+                        4
+                        *constant::mathematical::pi
+                        *pow(rc,3.0)
+                        *rhoVSat_
+                        *1000
+                        *Av
+                        /(3*thermo1.W()) 
+                      );
+                                 
     return (Wcr/(Nc*k*T1));
 }
 

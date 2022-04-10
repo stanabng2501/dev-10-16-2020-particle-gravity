@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2015-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,57 +22,58 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::heatTransferModels::RanzMarshall
+    Foam::liftModels::wallDamped
 
 Description
-    Ranz-Marshall correlation for turbulent heat transfer from the surface of a
-    sphere to the surrounding fluid.
 
 SourceFiles
-    RanzMarshall.C
+    wallDamped.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef RanzMarshallLimited_H
-#define RanzMarshallLimited_H
+#ifndef wallDampedTurbulenceDispersion_H
+#define wallDampedTurbulenceDispersion_H
 
-#include "heatTransferModel.H"
-#include "phasePair.H"
+#include "turbulentDispersionModel.H"
+#include "wallDampingModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace heatTransferModels
+
+class phasePair;
+
+namespace turbulentDispersionModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class RanzMarshall Declaration
+                         Class wallDamped Declaration
 \*---------------------------------------------------------------------------*/
 
-class RanzMarshallLimited
+class wallDamped
 :
-    public heatTransferModel
+    public turbulentDispersionModel
 {
+    // Private Data
 
-    //- Nucleation Sauter Diameter
-        dimensionedScalar dNuc_;
-        
-    // Name of phase
-        word phaseTypeName_;     
-        
-    // phase type : dispersed or continuous
-       const phaseModel& phaseType_;
+        //- The lift model to damp
+        autoPtr<turbulentDispersionModel> turbulentDispersionModel_;
+
+        //- The wall-damping model
+        autoPtr<wallDampingModel> wallDampingModel_;
+
+
 public:
 
     //- Runtime type information
-    TypeName("RanzMarshallLimited");
+    TypeName("wallDamped");
 
 
     // Constructors
 
-        //- Construct from components
-        RanzMarshallLimited
+        //- Construct from a dictionary and a phase pair
+        wallDamped
         (
             const dictionary& dict,
             const phasePair& pair
@@ -80,19 +81,28 @@ public:
 
 
     //- Destructor
-    virtual ~RanzMarshallLimited();
+    virtual ~wallDamped();
 
 
     // Member Functions
+    
 
-        //- The heat transfer function K used in the enthalpy equation
-        tmp<volScalarField> K(const scalar residualAlpha) const;
+
+        //- Return lift coefficient
+        virtual tmp<volScalarField> D() const;
+
+
+        //- Return lift force
+        virtual tmp<volVectorField> F() const;
+
+        //- Return face lift force
+        virtual tmp<surfaceScalarField> Ff() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace heatTransferModels
+} // End namespace liftModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2015-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,62 +23,64 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RanzMarshallLimited.H"
+#include "wallDampedTurbulenceDispersion.H"
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
+ 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace heatTransferModels
+namespace turbulentDispersionModels
 {
-    defineTypeNameAndDebug(RanzMarshallLimited, 0);
-    addToRunTimeSelectionTable(heatTransferModel, RanzMarshallLimited, dictionary);
+    defineTypeNameAndDebug(wallDamped, 0);
+    addToRunTimeSelectionTable(turbulentDispersionModel, wallDamped, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshallLimited::RanzMarshallLimited
+Foam::turbulentDispersionModels::wallDamped::wallDamped
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
-    heatTransferModel(dict, pair),
-    dNuc_("dNuc", dimLength, dict),
-    phaseTypeName_(dict.lookup("phaseTypeName")),
-    phaseType_(phaseTypeName_ == "continuous"? pair.continuous() : pair.dispersed())
+    turbulentDispersionModel(dict, pair),
+    turbulentDispersionModel_(turbulentDispersionModel::New(dict.subDict("turbulentDispersion"), pair)),
+    wallDampingModel_
+    (
+        wallDampingModel::New(dict.subDict("wallDamping"), pair)
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshallLimited::~RanzMarshallLimited()
+Foam::turbulentDispersionModels::wallDamped::~wallDamped()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::heatTransferModels::RanzMarshallLimited::K(const scalar residualAlpha) const
+ 
+Foam::tmp<Foam::volScalarField> Foam::turbulentDispersionModels::wallDamped::D() const
 {
-    volScalarField Re(pair_.magUr()*dNuc_
-                       /phaseType_.thermo().nu()); 
-    volScalarField Pr(phaseType_.thermo().nu()
-                       *phaseType_.thermo().Cpv()
-                       *phaseType_.rho()
-                       /phaseType_.thermo().kappa()); 
-    volScalarField Nu(2 + 0.6*sqrt(Re)*cbrt(Pr));
+    return wallDampingModel_->damping()*turbulentDispersionModel_->D();
+}
 
-    return
-        6
-       *max(phaseType_, residualAlpha)
-       *phaseType_.thermo().kappa()
-       *Nu
-       /sqr(dNuc_);
+
+Foam::tmp<Foam::volVectorField> Foam::turbulentDispersionModels::wallDamped::F() const
+{
+    return wallDampingModel_->damping()*turbulentDispersionModel_->F();
+}
+
+
+Foam::tmp<Foam::surfaceScalarField> Foam::turbulentDispersionModels::wallDamped::Ff() const
+{
+    return wallDampingModel_->dampingf()*turbulentDispersionModel_->Ff();
 }
 
 

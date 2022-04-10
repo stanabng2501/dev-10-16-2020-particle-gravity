@@ -72,6 +72,12 @@ class bulkNucleationModel
          
           //- Saturation pressure
          const dimensionedScalar pSat_;
+         
+         //- Saturation Vapour Density
+         const dimensionedScalar rhoVSat_;
+         
+         //- Saturation Liquid Density
+         const dimensionedScalar rhoLSat_;
                        
 protected:
 
