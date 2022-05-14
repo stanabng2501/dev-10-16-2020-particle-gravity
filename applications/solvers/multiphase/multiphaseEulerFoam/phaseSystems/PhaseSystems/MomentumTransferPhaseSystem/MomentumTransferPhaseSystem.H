@@ -138,7 +138,17 @@ private:
 
         //- Drag coefficients
         KdTable Kds_;
+        
+        //- Drag CdRe's
+        KdTable KCds_;
 
+        //- Pair Reynols Numbers based on drag Models
+        KdTable KRes_;
+        
+        //- Pair Etovos Numbers based on drag Models
+        KdTable KEtvs_;
+        
+                
         //- Face drag coefficients
         KdfTable Kdfs_;
 

@@ -202,6 +202,7 @@ MomentumTransferPhaseSystem
     )
     {
         const phasePair& pair(this->phasePairs_[dragModelIter.key()]);
+ 
 
         Kds_.insert
         (
@@ -219,6 +220,7 @@ MomentumTransferPhaseSystem
             )
         );
 
+        
         Kdfs_.insert
         (
             pair,
@@ -234,7 +236,79 @@ MomentumTransferPhaseSystem
                 dimensionedScalar(dragModel::dimK, 0)
             )
         );
-    }
+        
+      }  
+  
+      forAllConstIter
+      (
+       phaseSystem::phasePairTable,
+       this->phasePairs_,
+       phasePairIter
+      )
+    
+        {
+          const phasePair& pair(this->phasePairs_[phasePairIter.key()]);
+          if( pair.phase1().fluid().foundSubModel<dragModel>(pair))
+           
+            { 
+            
+                 Info << "Pair name" << pair.name()<<endl;
+                    KCds_.insert       
+                    (
+                       pair,
+                       new volScalarField
+                       (
+                          IOobject
+                            (
+                               IOobject::groupName("KCd", pair.name()),
+                               this->mesh().time().timeName(),
+                               this->mesh(),
+                               IOobject::NO_READ,
+                               IOobject::AUTO_WRITE
+                            ),
+                            pair.phase1().fluid().lookupSubModel<dragModel>(pair).CdRes()
+ 
+                       )
+                     );
+
+
+                    KRes_.insert       
+                    (
+                       pair,
+                       new volScalarField
+                       (
+                          IOobject
+                            (
+                               IOobject::groupName("KRe", pair.name()),
+                               this->mesh().time().timeName(),
+                               this->mesh(),
+                               IOobject::NO_READ,
+                               IOobject::AUTO_WRITE
+                            ),
+                            pair.phase1().fluid().lookupSubModel<dragModel>(pair).Res()
+                       )
+                     );        
+
+
+                    KEtvs_.insert       
+                    (
+                       pair,
+                       new volScalarField
+                       (
+                          IOobject
+                            (
+                               IOobject::groupName("KEtv", pair.name()),
+                               this->mesh().time().timeName(),
+                               this->mesh(),
+                               IOobject::NO_READ,
+                               IOobject::AUTO_WRITE
+                            ),
+                            pair.phase1().fluid().lookupSubModel<dragModel>(pair).Etvs()
+                       )
+                     );           
+  
+            } 
+        }
 
     forAllConstIter
     (
@@ -324,6 +398,19 @@ Foam::MomentumTransferPhaseSystem<BasePhaseSystem>::momentumTransfer()
         *Kds_[dragModelIter.key()] = dragModelIter()->K();
         *Kdfs_[dragModelIter.key()] = dragModelIter()->Kf();
     }
+     
+    forAllConstIter
+    (
+        KdTable,
+        KCds_,
+        KCdIter
+    )        
+       {
+          const phasePair& pair(this->phasePairs_[KCdIter.key()]);
+          *KCds_[KCdIter.key()] = pair.phase1().fluid().lookupSubModel<dragModel>(pair).CdRes();
+          *KRes_[KCdIter.key()] = pair.phase1(). fluid().lookupSubModel<dragModel>(pair).Res(); 
+          *KEtvs_[KCdIter.key()] = pair.phase1(). fluid().lookupSubModel<dragModel>(pair).Etvs();        
+       }
 
     // Add the implicit part of the drag force
     forAllConstIter(KdTable, Kds_, KdIter)

@@ -126,6 +126,50 @@ LimitedEvaporationPhaseChangePhaseSystem
                 dimensionedScalar(dimDensity/dimTime, 0)
             )
         );
+        
+        H1_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "limitedEvaporationPhaseChange:H1",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::AUTO_WRITE
+                ),
+                this->mesh(),
+                dimensionedScalar(dimensionSet(1, -1, -3, -1, 0), 0)
+            )
+        );
+        
+        H2_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "limitedEvaporationPhaseChange:H2",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::AUTO_WRITE
+                ),
+                this->mesh(),
+                dimensionedScalar(dimensionSet(1, -1, -3, -1, 0), 0)
+            )
+        );  
 
     }
     
@@ -211,6 +255,8 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             volScalarField H1(this->heatTransferModels_[pair].first()->K());
             volScalarField H2(this->heatTransferModels_[pair].second()->K());
 
+            *H1_[pair] = H1;
+            *H2_[pair] = H2;
             // Limit the H[12] to avoid /0
             H1.max(small);
             H2.max(small);
@@ -243,19 +289,30 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
               dimensionedScalar( dimVolume, small)     
              );
             meshVol.ref() =    phase1().mesh().V(); 
-         
-            const  scalar& WcrkTNmin(saturationModelIter()->WcrkTNmin());
-            const  scalar& WcrFrac(saturationModelIter()->WcrFrac());
  
-            scalar   WcrLimit; 
-                        
- //           const scalar dpdtvalue =  (1-dpdtLim ) * min(dpdt.primitiveField()) ;
-            const scalar dmdtfRelaxAdd =
-                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition"); 
-
-
+            scalar   WcrLimit;         
             const scalar dmdtfRelaxRem =
-                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal");                 
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal"); 
+            const scalar dmdtfRelaxAdd =
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition");   
+            const  scalar& WcrkTDelta(saturationModelIter()->WcrkTDelta());            
+            const  scalar& WcrkTNmin(saturationModelIter()->WcrkTNmin());
+            
+            WcrLimit = WcrkTNmin - WcrkTDelta;
+           
+            // blending factor 
+            volScalarField factor =  (WcrkTN - WcrLimit)/ (2.0* WcrkTDelta) ;  
+            factor = max( min (factor,1.0), 0.0);
+ 
+            Info << "Factor   min = " << min(factor.primitiveField())
+                << ",     max = " << max(factor.primitiveField())
+                 << ",    mean = " << average(factor.primitiveField()) 
+                << endl;           
+ 
+/*            
+            const  scalar& WcrFrac(saturationModelIter()->WcrFrac());                        
+ //         const scalar dpdtvalue =  (1-dpdtLim ) * min(dpdt.primitiveField()) ;
+                
          // setting Wcr Limits
            if(WcrFrac <1)
              {
@@ -266,7 +323,9 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
              {
                WcrLimit = WcrkTNmin;
              }                     
-            
+ */         
+ 
+   
             label  ncvs  = 0;
             scalar nucvol = 0.0; 
             scalar dmdtfNewVal = 0.0;                            
@@ -275,7 +334,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                if(WcrkTN[celli] > WcrLimit ) 
                {
                
-                 dmdtfNewVal =  (H1[celli]*(Tsat[celli] - T1[celli]) + H2[celli]*(Tsat[celli] - T2[celli]))/L[celli]; 
+                 dmdtfNewVal =  factor[celli]*(H1[celli]*(Tsat[celli] - T1[celli]) + H2[celli]*(Tsat[celli] - T2[celli]))/L[celli]; 
                  dmdtf[celli] = (1 - dmdtfRelaxAdd)*dmdtf[celli] + dmdtfRelaxAdd*dmdtfNewVal;  
                  ++ ncvs ;
                  nucvol += meshVol[celli];     

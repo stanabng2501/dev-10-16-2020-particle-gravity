@@ -22,81 +22,72 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::heatTransferModels::RanzMarshall
+    Foam::dragModels::noDrag
 
 Description
-    Ranz-Marshall correlation for turbulent heat transfer from the surface of a
-    sphere to the surrounding fluid.
+    No Drag
 
 SourceFiles
-    RanzMarshall.C
+    SchillerNaumann.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef RanzMarshallLimited_H
-#define RanzMarshallLimited_H
+#ifndef noDrag_H
+#define noDrag_H
 
-#include "heatTransferModel.H"
-#include "phasePair.H"
+#include "dragModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace heatTransferModels
+namespace dragModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class RanzMarshall Declaration
+                       Class SchillerNaumann Declaration
 \*---------------------------------------------------------------------------*/
 
-class RanzMarshallLimited
+class noDrag
 :
-    public heatTransferModel
+    public dragModel
 {
+    // Private Data
 
-    //- Nucleation Sauter Diameter
-        dimensionedScalar dNuc_;
-        
-    // Name of phase
-       const word alphaPhaseTypeName_;     
-        
-    // phase type : dispersed or continuous
-       const phaseModel& alphaPhaseType_;
-       
-             
-      //- Limit of Reynolds number
-      const dimensionedScalar ReLimit_;
+ 
+
+
 public:
 
     //- Runtime type information
-    TypeName("RanzMarshallLimited");
+    TypeName("none");
 
 
     // Constructors
 
-        //- Construct from components
-        RanzMarshallLimited
+        //- Construct from a dictionary and a phase pair
+        noDrag
         (
             const dictionary& dict,
-            const phasePair& pair
+            const phasePair& pair,
+            const bool registerObject
         );
 
 
     //- Destructor
-    virtual ~RanzMarshallLimited();
+    virtual ~noDrag();
 
 
     // Member Functions
 
-        //- The heat transfer function K used in the enthalpy equation
-        tmp<volScalarField> K(const scalar residualAlpha) const;
+        //- Drag coefficient
+        virtual tmp<volScalarField> CdRe() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace heatTransferModels
+} // End namespace dragModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

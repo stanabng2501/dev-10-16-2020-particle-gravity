@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2014-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,81 +22,80 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::heatTransferModels::RanzMarshall
+    Foam::dragModels::IshiiZuber
 
 Description
-    Ranz-Marshall correlation for turbulent heat transfer from the surface of a
-    sphere to the surrounding fluid.
+    Ishii and Zuber (1979) drag model for dense dispersed bubbly flows with 
+    a limit to the Reynols Number.
+
+    Reference:
+    \verbatim
+        Ishii, M., & Zuber, N. (1979).
+        Drag coefficient and relative velocity in bubbly, droplet or particulate
+        flows.
+        AIChE Journal, 25(5), 843-855.
+    \endverbatim
 
 SourceFiles
-    RanzMarshall.C
+    IshiiZuberLimited.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef RanzMarshallLimited_H
-#define RanzMarshallLimited_H
+#ifndef IshiiZuberLimited_H
+#define IshiiZuberLimited_H
 
-#include "heatTransferModel.H"
-#include "phasePair.H"
+#include "dragModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace heatTransferModels
+namespace dragModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class RanzMarshall Declaration
+                         Class IshiiZuber Declaration
 \*---------------------------------------------------------------------------*/
 
-class RanzMarshallLimited
+class IshiiZuberLimited
 :
-    public heatTransferModel
+    public dragModel
 {
 
-    //- Nucleation Sauter Diameter
-        dimensionedScalar dNuc_;
-        
-    // Name of phase
-       const word alphaPhaseTypeName_;     
-        
-    // phase type : dispersed or continuous
-       const phaseModel& alphaPhaseType_;
-       
-             
+
       //- Limit of Reynolds number
-      const dimensionedScalar ReLimit_;
+        const dimensionedScalar ReLimit_;
 public:
 
     //- Runtime type information
-    TypeName("RanzMarshallLimited");
+    TypeName("IshiiZuberLimited");
 
 
     // Constructors
 
-        //- Construct from components
-        RanzMarshallLimited
+        //- Construct from a dictionary and a phase pair
+        IshiiZuberLimited
         (
             const dictionary& dict,
-            const phasePair& pair
+            const phasePair& pair,
+            const bool registerObject
         );
 
 
     //- Destructor
-    virtual ~RanzMarshallLimited();
+    virtual ~IshiiZuberLimited();
 
 
     // Member Functions
 
-        //- The heat transfer function K used in the enthalpy equation
-        tmp<volScalarField> K(const scalar residualAlpha) const;
+        //- Drag coefficient
+        virtual tmp<volScalarField> CdRe() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace heatTransferModels
+} // End namespace dragModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

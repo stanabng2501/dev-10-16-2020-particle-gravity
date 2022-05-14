@@ -142,6 +142,18 @@ public:
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
         virtual tmp<volScalarField> K() const;
 
+        //Return CdRe's        
+        virtual tmp<volScalarField> CdRes() const;
+
+
+        //Return Reynolds Numbers        
+        virtual tmp<volScalarField> Res() const;
+        
+        
+        //Return Etvos Numbers        
+        virtual tmp<volScalarField> Etvs() const;
+        
+                
         //- Return the drag coefficient Kf
         //  used in the face-momentum equations
         virtual tmp<surfaceScalarField> Kf() const;

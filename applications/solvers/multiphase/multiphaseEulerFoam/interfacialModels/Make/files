@@ -15,9 +15,12 @@ dragModels/Tenneti/Tenneti.C
 dragModels/TomiyamaKataokaZunSakaguchi/TomiyamaKataokaZunSakaguchi.C
 dragModels/WenYu/WenYu.C
 dragModels/IshiiZuber/IshiiZuber.C
+dragModels/IshiiZuberLimited/IshiiZuberLimited.C
 dragModels/AttouFerschneider/AttouFerschneider.C
 dragModels/aerosolDrag/aerosolDrag.C
 dragModels/timeScaleFilteredDrag/timeScaleFilteredDrag.C
+dragModels/noDrag/noDrag.C
+dragModels/wallDampedDrag/wallDampedDrag.C
 
 swarmCorrections/swarmCorrection/swarmCorrection.C
 swarmCorrections/swarmCorrection/swarmCorrectionNew.C

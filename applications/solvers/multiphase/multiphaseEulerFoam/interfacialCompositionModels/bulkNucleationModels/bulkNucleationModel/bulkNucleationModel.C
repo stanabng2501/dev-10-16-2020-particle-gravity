@@ -48,7 +48,8 @@ Foam::bulkNucleationModel::bulkNucleationModel
 )
 :
     pair_(pair),
-    WcrktNmin_(dict.lookup<scalar>("WcrktNmin")),
+    WcrkTNmin_(dict.lookup<scalar>("WcrkTNmin")),
+    WcrkTDelta_(dict.lookup<scalar>("WcrkTDelta")),    
     WcrFrac_(dict.lookup<scalar>("WcrFrac")),
     D32_(dict.lookupOrDefault<scalar>("D32",1e-4)),   
     pSat_("pSat", dimPressure, dict),  
@@ -180,7 +181,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarFi
      forAll(dmdtf, celli)
     {   
     
-       if(WcrkTN[celli] > WcrktNmin_  ) 
+       if(WcrkTN[celli] > WcrkTNmin_  ) 
          {
            dmdtf[celli] = Ja[celli]*meshVol[celli]*rho1[celli]*D32vol[celli];   
             ++ ncvs ;
@@ -275,12 +276,17 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
 
 Foam::scalar Foam::bulkNucleationModel::WcrkTNmin( ) const
 {
-    return WcrktNmin_;
+    return WcrkTNmin_;
 }
 
 
 Foam::scalar Foam::bulkNucleationModel::WcrFrac( ) const
 {
     return WcrFrac_;
+}
+
+Foam::scalar Foam::bulkNucleationModel::WcrkTDelta( ) const
+{
+    return WcrkTDelta_;
 }
 // ************************************************************************* //

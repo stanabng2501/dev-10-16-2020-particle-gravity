@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RanzMarshallLimited.H"
+#include "noDrag.H"
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -31,66 +31,44 @@ License
 
 namespace Foam
 {
-namespace heatTransferModels
+namespace dragModels
 {
-    defineTypeNameAndDebug(RanzMarshallLimited, 0);
-    addToRunTimeSelectionTable(heatTransferModel, RanzMarshallLimited, dictionary);
+    defineTypeNameAndDebug(noDrag, 0);
+    addToRunTimeSelectionTable(dragModel, noDrag, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshallLimited::RanzMarshallLimited
+Foam::dragModels::noDrag::noDrag
 (
     const dictionary& dict,
-    const phasePair& pair
+    const phasePair& pair,
+    const bool registerObject
 )
 :
-    heatTransferModel(dict, pair),
-    dNuc_("dNuc", dimLength, dict),
-    alphaPhaseTypeName_(dict.lookup("alphaPhaseTypeName")),
-    alphaPhaseType_(alphaPhaseTypeName_ == "continuous"? pair.continuous() : pair.dispersed()),
-    ReLimit_("ReLimit", dimless, dict)
+    dragModel(dict, pair, registerObject)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshallLimited::~RanzMarshallLimited()
+Foam::dragModels::noDrag::~noDrag()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::heatTransferModels::RanzMarshallLimited::K(const scalar residualAlpha) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::noDrag::CdRe() const
 {
-    volScalarField Re(pair_.magUr()*dNuc_
-                       /pair_.continuous().thermo().nu()); 
-    
-    
-    Info << "Reynolds Number before limiting for pair = " << pair_.name() 
-         << ",  min " << min(Re.primitiveField()) 
-         << ",  max " << max(Re.primitiveField()) 
-         << endl;
-    
-    Re = min(Re, ReLimit_);  
-    
-    Info << "RanzMarshall Re Limit   min = " << min(Re.primitiveField())
-         << ",    max = " << max(Re.primitiveField())
-          << endl; 
-                
-                             
-    volScalarField Pr(pair_.Pr()); 
-    volScalarField Nu(2 + 0.6*sqrt(Re)*cbrt(Pr));
-
-    return
-        6
-       *max(alphaPhaseType_, residualAlpha)
-       *pair_.continuous().thermo().kappa()
-       *Nu
-       /sqr(dNuc_);
+    const fvMesh& mesh(this->pair_.phase1().mesh());   
+    return volScalarField::New
+    (
+        "noDragCdRe",
+        mesh,
+        small
+    );
 }
 
 

@@ -62,9 +62,10 @@ class bulkNucleationModel
         
         
         //- Critical work limit per molecule min max
-        const scalar WcrktNmin_;
+        const scalar WcrkTNmin_;
 
-
+        //-Range for blending
+        const scalar WcrkTDelta_;
         //- Depressurization Limit below which nucleation will happen
         const scalar WcrFrac_;
         //- Mean Sauter Diameter of nucleating volume
@@ -179,6 +180,9 @@ public:
                  
         //- Return the minimum critical work
         scalar WcrkTNmin() const;  
+        
+       //- Return the range for blending
+        scalar WcrkTDelta() const; 
                
         // Evaluation
 

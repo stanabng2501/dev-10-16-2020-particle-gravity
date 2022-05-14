@@ -124,6 +124,30 @@ Foam::tmp<Foam::volScalarField> Foam::dragModel::K() const
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::dragModel::CdRes() const
+{
+    return CdRe();
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::dragModel::Res() const
+{
+    volScalarField Re(pair_.Re());
+     Info<< "Re." << pair_.name()
+         << ": min = " << min(Re.primitiveField())
+         << ": mean = " << average(Re.primitiveField())
+         << ", max = " << max(Re.primitiveField())
+         << endl;
+    return pair_.Re();
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::dragModel::Etvs() const
+{
+    return pair_.Eo();
+}
+ 
+
 Foam::tmp<Foam::surfaceScalarField> Foam::dragModel::Kf() const
 {
     return

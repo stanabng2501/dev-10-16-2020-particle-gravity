@@ -81,7 +81,9 @@ class LimitedEvaporationPhaseChangePhaseSystem
         //- Mass transfer rates
         phaseSystem::dmdtfTable dmdtfs_;
 
- 
+       // Heat Trasnfer Rates
+        phaseSystem::dmdtfTable H1_;       
+         phaseSystem::dmdtfTable H2_;    
 
       // Private Member Functions
 

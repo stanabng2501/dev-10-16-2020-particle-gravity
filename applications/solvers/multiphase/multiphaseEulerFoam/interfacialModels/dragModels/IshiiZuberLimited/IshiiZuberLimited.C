@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2014-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RanzMarshallLimited.H"
+#include "IshiiZuberLimited.H"
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -31,66 +31,72 @@ License
 
 namespace Foam
 {
-namespace heatTransferModels
+namespace dragModels
 {
-    defineTypeNameAndDebug(RanzMarshallLimited, 0);
-    addToRunTimeSelectionTable(heatTransferModel, RanzMarshallLimited, dictionary);
+    defineTypeNameAndDebug(IshiiZuberLimited, 0);
+    addToRunTimeSelectionTable(dragModel, IshiiZuberLimited, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshallLimited::RanzMarshallLimited
+Foam::dragModels::IshiiZuberLimited::IshiiZuberLimited
 (
     const dictionary& dict,
-    const phasePair& pair
+    const phasePair& pair,
+    const bool registerObject
 )
 :
-    heatTransferModel(dict, pair),
-    dNuc_("dNuc", dimLength, dict),
-    alphaPhaseTypeName_(dict.lookup("alphaPhaseTypeName")),
-    alphaPhaseType_(alphaPhaseTypeName_ == "continuous"? pair.continuous() : pair.dispersed()),
+    dragModel(dict, pair, registerObject),
     ReLimit_("ReLimit", dimless, dict)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshallLimited::~RanzMarshallLimited()
+Foam::dragModels::IshiiZuberLimited::~IshiiZuberLimited()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::heatTransferModels::RanzMarshallLimited::K(const scalar residualAlpha) const
+Foam::dragModels::IshiiZuberLimited::CdRe() const
 {
-    volScalarField Re(pair_.magUr()*dNuc_
-                       /pair_.continuous().thermo().nu()); 
-    
-    
-    Info << "Reynolds Number before limiting for pair = " << pair_.name() 
-         << ",  min " << min(Re.primitiveField()) 
-         << ",  max " << max(Re.primitiveField()) 
-         << endl;
-    
+    volScalarField Re(pair_.Re());
     Re = min(Re, ReLimit_);  
     
-    Info << "RanzMarshall Re Limit   min = " << min(Re.primitiveField())
-         << ",    max = " << max(Re.primitiveField())
-          << endl; 
-                
-                             
-    volScalarField Pr(pair_.Pr()); 
-    volScalarField Nu(2 + 0.6*sqrt(Re)*cbrt(Pr));
+    const volScalarField Eo(pair_.Eo());
+
+    const volScalarField mud(pair_.dispersed().thermo().mu());
+    const volScalarField muc(pair_.continuous().thermo().mu());
+
+    const volScalarField muStar((mud + 0.4*muc)/(mud + muc));
+
+    const volScalarField muMix
+    (
+        muc*pow(max(1 - pair_.dispersed(), scalar(1e-3)), -2.5*muStar)
+    );
+
+    const volScalarField ReM(Re*muc/muMix);
+    const volScalarField CdRe
+    (
+        pos0(1000 - ReM)*24*(1 + 0.1*pow(ReM, 0.75))
+      + neg(1000 - ReM)*0.44*ReM
+    );
+
+    volScalarField F((muc/muMix)*sqrt(1 - pair_.dispersed()));
+    F.max(1e-3);
+
+    const volScalarField Ealpha((1 + 17.67*pow(F, 0.8571428))/(18.67*F));
+
+    const volScalarField CdReEllipse(Ealpha*0.6666*sqrt(Eo)*Re);
 
     return
-        6
-       *max(alphaPhaseType_, residualAlpha)
-       *pair_.continuous().thermo().kappa()
-       *Nu
-       /sqr(dNuc_);
+        pos0(CdReEllipse - CdRe)
+       *min(CdReEllipse, Re*sqr(1 - pair_.dispersed())*2.66667)
+      + neg(CdReEllipse - CdRe)*CdRe;
 }
 
 

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2015-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,81 +22,90 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::heatTransferModels::RanzMarshall
+    Foam::liftModels::wallDamped
 
 Description
-    Ranz-Marshall correlation for turbulent heat transfer from the surface of a
-    sphere to the surrounding fluid.
 
 SourceFiles
-    RanzMarshall.C
+    wallDamped.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef RanzMarshallLimited_H
-#define RanzMarshallLimited_H
+#ifndef wallDampedDrag_H
+#define wallDampedDrag_H
 
-#include "heatTransferModel.H"
-#include "phasePair.H"
+#include "dragModel.H"
+#include "wallDampingModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace heatTransferModels
+
+class phasePair;
+
+namespace dragModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class RanzMarshall Declaration
+                         Class wallDamped Declaration
 \*---------------------------------------------------------------------------*/
 
-class RanzMarshallLimited
+class wallDamped
 :
-    public heatTransferModel
+    public dragModel
 {
+    // Private Data
 
-    //- Nucleation Sauter Diameter
-        dimensionedScalar dNuc_;
-        
-    // Name of phase
-       const word alphaPhaseTypeName_;     
-        
-    // phase type : dispersed or continuous
-       const phaseModel& alphaPhaseType_;
-       
-             
-      //- Limit of Reynolds number
-      const dimensionedScalar ReLimit_;
+        //- The drag model to damp
+        autoPtr<dragModel> dragModel_;
+
+        //- The wall-damping model
+        autoPtr<wallDampingModel> wallDampingModel_;
+
+
 public:
 
     //- Runtime type information
-    TypeName("RanzMarshallLimited");
+    TypeName("wallDamped");
 
 
     // Constructors
 
-        //- Construct from components
-        RanzMarshallLimited
+        //- Construct from a dictionary and a phase pair
+        wallDamped
         (
             const dictionary& dict,
-            const phasePair& pair
+            const phasePair& pair,
+            const bool registerObject
         );
 
 
     //- Destructor
-    virtual ~RanzMarshallLimited();
+    virtual ~wallDamped();
 
 
     // Member Functions
 
-        //- The heat transfer function K used in the enthalpy equation
-        tmp<volScalarField> K(const scalar residualAlpha) const;
+ 
+
+         //- Return the reference to phase-intensive drag coefficient Ki
+        virtual tmp<volScalarField> Ki() const;
+
+        //- Return the drag coefficient K
+        virtual tmp<volScalarField> K() const;
+
+        //- Return the drag coefficient Kf
+        virtual tmp<surfaceScalarField> Kf() const;
+        
+        //- Drag coefficient
+        virtual tmp<volScalarField> CdRe() const ;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace heatTransferModels
+} // End namespace liftModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
