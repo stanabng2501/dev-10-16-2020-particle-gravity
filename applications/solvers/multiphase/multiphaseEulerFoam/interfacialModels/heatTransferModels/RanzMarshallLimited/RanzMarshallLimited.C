@@ -51,7 +51,8 @@ Foam::heatTransferModels::RanzMarshallLimited::RanzMarshallLimited
     dNuc_("dNuc", dimLength, dict),
     alphaPhaseTypeName_(dict.lookup("alphaPhaseTypeName")),
     alphaPhaseType_(alphaPhaseTypeName_ == "continuous"? pair.continuous() : pair.dispersed()),
-    ReLimit_("ReLimit", dimless, dict)
+    ReMin_("ReMin", dimless, dict),
+    ReMax_("ReMax", dimless, dict)
 {}
 
 
@@ -75,7 +76,7 @@ Foam::heatTransferModels::RanzMarshallLimited::K(const scalar residualAlpha) con
          << ",  max " << max(Re.primitiveField()) 
          << endl;
     
-    Re = min(Re, ReLimit_);  
+    Re =   max( min(Re, ReMax_), ReMin_);  
     
     Info << "RanzMarshall Re Limit   min = " << min(Re.primitiveField())
          << ",    max = " << max(Re.primitiveField())

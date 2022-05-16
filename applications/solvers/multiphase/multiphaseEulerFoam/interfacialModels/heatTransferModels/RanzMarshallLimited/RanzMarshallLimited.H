@@ -65,8 +65,11 @@ class RanzMarshallLimited
        const phaseModel& alphaPhaseType_;
        
              
-      //- Limit of Reynolds number
-      const dimensionedScalar ReLimit_;
+      //- Min Reynolds number
+      const dimensionedScalar ReMin_;
+      
+      //- Max Reynolds number
+      const dimensionedScalar ReMax_;
 public:
 
     //- Runtime type information
