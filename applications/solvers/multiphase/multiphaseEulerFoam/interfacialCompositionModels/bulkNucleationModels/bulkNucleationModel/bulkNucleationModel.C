@@ -225,11 +225,11 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
  Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::calcWcrkTN( ) const
 {
      const phaseModel& phase1 = pair_.phase1();
-     const phaseModel& phase2 = pair_.phase2();
+ //    const phaseModel& phase2 = pair_.phase2();
      const rhoThermo& thermo1 = phase1.thermo();
-     const rhoThermo& thermo2 = phase2.thermo();
+ //    const rhoThermo& thermo2 = phase2.thermo();
      const volScalarField& T1(thermo1.T());
-     const volScalarField& rho1(thermo1.rho());
+ //    const volScalarField& rho1(thermo1.rho());
  //    const volScalarField& rho2(thermo2.rho());
      const volScalarField& p(thermo1.p());
      const volScalarField sigma
@@ -246,8 +246,8 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
            
     volScalarField rc((2*sigma)/ ( (1-(rhoVSat_/rhoLSat_))* (pSat_-p))); 
  
-    Info<< "p min = " << min(p.primitiveField()) << ",  p max = " << max(p.primitiveField())  <<endl;  
-    Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
+  
+//    Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
      forAll(rc, celli)
     { 
         if(rc[celli] < 0) 
@@ -257,7 +257,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
         }    
     }
     
-   Info<< "rc   min = " << min(rc.primitiveField()) << ",  rc   max = " << max(rc.primitiveField()) <<endl;
+//   Info<< "rc   min = " << min(rc.primitiveField()) << ",  rc   max = " << max(rc.primitiveField()) <<endl;
    volScalarField Wcr (4*constant::mathematical::pi*sqr(rc)*sigma/3);      
    
      volScalarField Nc(

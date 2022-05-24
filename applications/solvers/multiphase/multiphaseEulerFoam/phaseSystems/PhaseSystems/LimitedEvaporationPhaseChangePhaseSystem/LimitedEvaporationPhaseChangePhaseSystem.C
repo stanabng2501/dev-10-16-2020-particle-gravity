@@ -241,6 +241,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
         const rhoThermo& thermo2 = phase2.thermo();
         const volScalarField& T1(thermo1.T());
         const volScalarField& T2(thermo2.T());
+        const volScalarField& p(thermo1.p());
   //      const volScalarField  dpdt =  fvc::ddt(phase1.thermo().p()); 
   //     const volScalarField&  dpdt(phase1.fluid().dpdt());
 
@@ -250,7 +251,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             volScalarField& dmdtf(*this->dmdtfs_[pair]);
             volScalarField L(this->L(pair, dmdtf, T2, latentHeatScheme::symmetric));
 
-            const volScalarField Tsat(saturationModelIter()->Tsat(thermo1.p()));  
+            const volScalarField Tsat(saturationModelIter()->Tsat(p));  
             const volScalarField WcrkTN(saturationModelIter()->calcWcrkTN( ));   
             volScalarField H1(this->heatTransferModels_[pair].first()->K());
             volScalarField H2(this->heatTransferModels_[pair].second()->K());
@@ -352,16 +353,20 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
            Info << "Total Nucleating CV's = " << ncvs 
                 << ",  Total nucleating volume = " << nucvol 
                 << endl;
- 
+
+           Info << "p min = " << min(p.primitiveField()) 
+                << ",  p max = " << max(p.primitiveField())
+                <<endl;
+                
            Info << "WcrkTN   min = " << min(WcrkTN.primitiveField())
                 << ", WcrkTN   max = " << max(WcrkTN.primitiveField())
                 << ", Wcr Limit = " << WcrLimit
                 << endl;
                 
-             Info<< "Latent Heat  min = " << min(L.primitiveField())
-                 << ", mean = " << average(L.primitiveField())
-                 << ", max = " << max(L.primitiveField())
-                 << endl;
+ //            Info<< "Latent Heat  min = " << min(L.primitiveField())
+ //                << ", mean = " << average(L.primitiveField())
+ //                << ", max = " << max(L.primitiveField())
+ //                << endl;
                 
                  
             Info<< dmdtf.name()

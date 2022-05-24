@@ -71,10 +71,10 @@ Foam::heatTransferModels::RanzMarshallLimited::K(const scalar residualAlpha) con
                        /pair_.continuous().thermo().nu()); 
     
     
-    Info << "Reynolds Number before limiting for pair = " << pair_.name() 
-         << ",  min " << min(Re.primitiveField()) 
-         << ",  max " << max(Re.primitiveField()) 
-         << endl;
+ //   Info << "Reynolds Number before limiting for pair = " << pair_.name() 
+ //        << ",  min " << min(Re.primitiveField()) 
+ //        << ",  max " << max(Re.primitiveField()) 
+ //        << endl;
     
     Re =   max( min(Re, ReMax_), ReMin_);  
     
@@ -85,7 +85,15 @@ Foam::heatTransferModels::RanzMarshallLimited::K(const scalar residualAlpha) con
                              
     volScalarField Pr(pair_.Pr()); 
     volScalarField Nu(2 + 0.6*sqrt(Re)*cbrt(Pr));
+    volScalarField alphaNu(alphaPhaseType_ * Nu);
 
+    Info << "Alpha Nusselt number for Ranz Marshall for pair = " << pair_.name() 
+         << ",  mean " << average(alphaNu.primitiveField()) 
+         << ",  min " << min(alphaNu.primitiveField()) 
+         << ",  max " << max(alphaNu.primitiveField()) 
+         << endl;
+         
+         
     return
         6
        *max(alphaPhaseType_, residualAlpha)
