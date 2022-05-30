@@ -264,7 +264,7 @@ MomentumTransferPhaseSystem
                                this->mesh().time().timeName(),
                                this->mesh(),
                                IOobject::NO_READ,
-                               IOobject::AUTO_WRITE
+                               IOobject::NO_WRITE
                             ),
                             pair.phase1().fluid().lookupSubModel<dragModel>(pair).CdRes()
  
@@ -283,7 +283,7 @@ MomentumTransferPhaseSystem
                                this->mesh().time().timeName(),
                                this->mesh(),
                                IOobject::NO_READ,
-                               IOobject::AUTO_WRITE
+                               IOobject::NO_WRITE
                             ),
                             pair.phase1().fluid().lookupSubModel<dragModel>(pair).Res()
                        )
@@ -301,7 +301,7 @@ MomentumTransferPhaseSystem
                                this->mesh().time().timeName(),
                                this->mesh(),
                                IOobject::NO_READ,
-                               IOobject::AUTO_WRITE
+                               IOobject::NO_WRITE
                             ),
                             pair.phase1().fluid().lookupSubModel<dragModel>(pair).Etvs()
                        )

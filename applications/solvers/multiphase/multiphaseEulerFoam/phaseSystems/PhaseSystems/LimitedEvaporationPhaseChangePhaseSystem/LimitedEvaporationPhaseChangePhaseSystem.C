@@ -120,7 +120,7 @@ LimitedEvaporationPhaseChangePhaseSystem
                     this->mesh().time().timeName(),
                     this->mesh(),
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::NO_WRITE
                 ),
                 this->mesh(),
                 dimensionedScalar(dimDensity/dimTime, 0)
@@ -142,7 +142,7 @@ LimitedEvaporationPhaseChangePhaseSystem
                     this->mesh().time().timeName(),
                     this->mesh(),
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::NO_WRITE
                 ),
                 this->mesh(),
                 dimensionedScalar(dimensionSet(1, -1, -3, -1, 0), 0)
@@ -164,7 +164,7 @@ LimitedEvaporationPhaseChangePhaseSystem
                     this->mesh().time().timeName(),
                     this->mesh(),
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::NO_WRITE
                 ),
                 this->mesh(),
                 dimensionedScalar(dimensionSet(1, -1, -3, -1, 0), 0)
