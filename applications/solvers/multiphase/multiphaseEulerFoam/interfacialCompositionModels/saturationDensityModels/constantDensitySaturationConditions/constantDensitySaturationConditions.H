@@ -22,40 +22,44 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::surfaceTensionModels::constantSurfaceTensionCoefficient
+    Foam::saturationModels::constantSaturationConditions
 
 Description
-    Constant value surface tension model.
+    Constant saturation pressure and temperature.
 
 SourceFiles
-    constantSurfaceTensionCoefficient.C
+    constantSaturationConditions.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantSurfaceTensionCoefficient_H
-#define constantSurfaceTensionCoefficient_H
+#ifndef constantDensitySaturationConditions_H
+#define constantDensitySaturationConditions_H
 
-#include "surfaceTensionModel.H"
+#include "saturationDensityModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace surfaceTensionModels
+namespace saturationDensityModels
 {
 
 /*---------------------------------------------------------------------------*\
-              Class constantSurfaceTensionCoefficient Declaration
+                Class constantSaturationConditions Declaration
 \*---------------------------------------------------------------------------*/
 
-class constantSurfaceTensionCoefficient
+class constantDensitySaturationConditions
 :
-    public surfaceTensionModel
+    public saturationDensityModel 
 {
+protected:
+
     // Private Data
 
-        //- Constant surface tension value
-        const dimensionedScalar sigma_;
+        //- Constant saturation pressure
+        dimensionedScalar rhoSat_;
+
+ 
 
 
 public:
@@ -63,38 +67,32 @@ public:
     //- Runtime type information
     TypeName("constant");
 
-
     // Constructors
 
-        //- Construct from a dictionary and a phase pair
-        constantSurfaceTensionCoefficient
+        //- Construct from a dictionary
+        constantDensitySaturationConditions
         (
             const dictionary& dict,
-            const phasePair& pair,
-            const bool registerObject
+            const phasePair& pair
         );
 
 
     //- Destructor
-    virtual ~constantSurfaceTensionCoefficient();
+    virtual ~constantDensitySaturationConditions();
 
 
     // Member Functions
 
+        //- Saturation pressure
+        virtual tmp<volScalarField> rhoSat(const volScalarField& T) const;
 
  
-        
-        //- Surface tension
-        virtual tmp<volScalarField> sigma() const;
-
-        //- Surface tension for a patch
-        virtual tmp<scalarField> sigma(label patchi) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace surfaceTensionModels
+} // End namespace saturationModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

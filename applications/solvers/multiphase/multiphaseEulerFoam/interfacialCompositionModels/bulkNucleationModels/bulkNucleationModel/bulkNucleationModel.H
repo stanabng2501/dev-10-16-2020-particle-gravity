@@ -41,7 +41,7 @@ SourceFiles
 #include "dictionary.H"
 #include "runTimeSelectionTables.H"
 #include "saturationModel.H"
-
+#include "saturationDensityModel.H"
 
 namespace Foam
 {
@@ -62,29 +62,31 @@ class bulkNucleationModel
         
         
         //- Critical work limit per molecule min max
-        const scalar WcrkTNmin_;
+        const scalar WcrkTNmin2_;
 
         //-Range for blending
         const scalar WcrkTDelta_;
         //- Depressurization Limit below which nucleation will happen
         const scalar WcrFrac_;
+        
         //- Mean Sauter Diameter of nucleating volume
          const scalar D32_;
-         
-          //- Saturation pressure
-         const dimensionedScalar pSat_;
-         
-         //- Saturation Vapour Density
-         const dimensionedScalar rhoVSat_;
-         
-         //- Saturation Liquid Density
-         const dimensionedScalar rhoLSat_;
-                       
+                                
 protected:
 
-        //- Saturation pressure model
-        autoPtr<saturationModel> saturationModel_;        
-
+        //- Saturation Temperature model
+        autoPtr<saturationModel> saturationTmodel_; 
+        
+         //- Saturation Pressuree model
+        autoPtr<saturationModel> saturationPmodel_;       
+               
+        //- Saturation gas density as function of T
+        autoPtr<saturationDensityModel> saturationRho1model_; 
+        
+        //- Saturation liquid density as function of T
+        autoPtr<saturationDensityModel> saturationRho2model_; 
+        
+        
    //       label ncvs_;
 
 public:
@@ -153,7 +155,7 @@ public:
  
  
          //- Minimum Critical work
-             tmp<volScalarField> calcWcrkTN
+             tmp<volScalarField> calcWcrkTN2
               (
               
               ) const;
@@ -179,7 +181,7 @@ public:
             ) const = 0; 
                  
         //- Return the minimum critical work
-        scalar WcrkTNmin() const;  
+        scalar WcrkTNmin2() const;  
         
        //- Return the range for blending
         scalar WcrkTDelta() const; 

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2015-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2017-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,77 +23,85 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "constantSurfaceTensionCoefficient.H"
-#include "phasePair.H"
+#include "function3.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace surfaceTensionModels
+namespace saturationDensityModels
 {
-    defineTypeNameAndDebug(constantSurfaceTensionCoefficient, 0);
-    addToRunTimeSelectionTable
-    (
-        surfaceTensionModel,
-        constantSurfaceTensionCoefficient,
-        dictionary
-    );
+    defineTypeNameAndDebug(function3, 0);
+    addToRunTimeSelectionTable(saturationDensityModel, function3, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::
-constantSurfaceTensionCoefficient
+Foam::saturationDensityModels::function3::function3
 (
     const dictionary& dict,
-    const phasePair& pair,
-    const bool registerObject
+    const phasePair& pair
 )
 :
-    surfaceTensionModel(dict, pair, registerObject),
-    sigma_("sigma", dimSigma, dict)
+    saturationDensityModel(pair),
+    function_
+    (
+        Function1<scalar>::New("function", dict)
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::
-~constantSurfaceTensionCoefficient()
+Foam::saturationDensityModels::function3::~function3()
 {}
 
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+ 
 
 Foam::tmp<Foam::volScalarField>
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::sigma() const
-{
-    const fvMesh& mesh(this->pair_.phase1().mesh());
-
-    return volScalarField::New
-    (
-        "sigma",
-        mesh,
-        sigma_
-    );
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::sigma
+Foam::saturationDensityModels::function3::rhoSat
 (
-    label patchi
+    const volScalarField& T
 ) const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
-
-    return tmp<scalarField>
+    tmp<volScalarField> trhoSat
     (
-        new scalarField(mesh.boundary()[patchi].size(), sigma_.value())
+        volScalarField::New
+        (
+            "rhoSat",
+            T.mesh(),
+            dimensionedScalar(dimDensity, 0)
+        )
     );
+
+    volScalarField& rhoSat = trhoSat.ref();
+
+    forAll(rhoSat, celli)
+    {
+        rhoSat[celli] = function_->value(T[celli]);
+    }
+
+    volScalarField::Boundary& rhoSatBf = rhoSat.boundaryFieldRef();
+
+    forAll(rhoSat.boundaryField(), patchi)
+    {
+        scalarField& rhoSatp = rhoSatBf[patchi];
+        const scalarField& tt = T.boundaryField()[patchi];
+
+        forAll(rhoSatp, facei)
+        {
+            rhoSatp[facei] = function_->value(tt[facei]);
+
+        }
+    }
+
+    return trhoSat;
 }
 
- 
+
 // ************************************************************************* //

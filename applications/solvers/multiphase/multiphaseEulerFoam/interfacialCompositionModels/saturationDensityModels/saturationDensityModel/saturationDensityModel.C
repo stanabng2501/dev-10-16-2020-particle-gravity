@@ -23,77 +23,37 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "constantSurfaceTensionCoefficient.H"
-#include "phasePair.H"
-#include "addToRunTimeSelectionTable.H"
+#include "saturationDensityModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace surfaceTensionModels
-{
-    defineTypeNameAndDebug(constantSurfaceTensionCoefficient, 0);
-    addToRunTimeSelectionTable
-    (
-        surfaceTensionModel,
-        constantSurfaceTensionCoefficient,
-        dictionary
-    );
-}
+    defineTypeNameAndDebug(saturationDensityModel, 0);
+    defineRunTimeSelectionTable(saturationDensityModel, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::
-constantSurfaceTensionCoefficient
-(
-    const dictionary& dict,
-    const phasePair& pair,
-    const bool registerObject
-)
+Foam::saturationDensityModel::saturationDensityModel(const phasePair& pair)
 :
-    surfaceTensionModel(dict, pair, registerObject),
-    sigma_("sigma", dimSigma, dict)
+    IOdictionary
+    (
+        IOobject
+        (
+            IOobject::groupName("saturationDensityModel", pair.name()),
+            pair.phase1().time().constant(),
+            pair.phase1().mesh()
+        )
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::
-~constantSurfaceTensionCoefficient()
+Foam::saturationDensityModel::~saturationDensityModel()
 {}
 
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::volScalarField>
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::sigma() const
-{
-    const fvMesh& mesh(this->pair_.phase1().mesh());
-
-    return volScalarField::New
-    (
-        "sigma",
-        mesh,
-        sigma_
-    );
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::sigma
-(
-    label patchi
-) const
-{
-    const fvMesh& mesh(this->pair_.phase1().mesh());
-
-    return tmp<scalarField>
-    (
-        new scalarField(mesh.boundary()[patchi].size(), sigma_.value())
-    );
-}
-
- 
 // ************************************************************************* //

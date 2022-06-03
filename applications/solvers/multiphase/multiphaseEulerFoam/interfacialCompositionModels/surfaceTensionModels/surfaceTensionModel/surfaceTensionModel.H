@@ -115,6 +115,8 @@ public:
 
     // Member Functions
 
+ 
+        
         //- Surface tension
         virtual tmp<volScalarField> sigma() const = 0;
 

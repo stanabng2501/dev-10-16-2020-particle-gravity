@@ -6,6 +6,7 @@ diffusiveMassTransferModels/sphericalDiffusiveMassTransfer/sphericalDiffusiveMas
 surfaceTensionModels/surfaceTensionModel/surfaceTensionModel.C
 surfaceTensionModels/surfaceTensionModel/surfaceTensionModelNew.C
 surfaceTensionModels/constantSurfaceTensionCoefficient/constantSurfaceTensionCoefficient.C
+surfaceTensionModels/function4/function4.C
 
 interfaceCompositionModels/interfaceCompositionModel/interfaceCompositionModel.C
 interfaceCompositionModels/interfaceCompositionModel/interfaceCompositionModelNew.C
@@ -29,6 +30,12 @@ saturationModels/AntoineExtended/AntoineExtended.C
 saturationModels/ArdenBuck/ArdenBuck.C
 saturationModels/polynomial/polynomial.C
 saturationModels/function1/function1.C
+saturationModels/function2/function2.C
 saturationModels/constantSaturationConditions/constantSaturationConditions.C
+
+saturationDensityModels/saturationDensityModel/saturationDensityModel.C
+saturationDensityModels/saturationDensityModel/saturationDensityModelNew.C
+saturationDensityModels/function3/function3.C
+saturationDensityModels/constantDensitySaturationConditions/constantDensitySaturationConditions.C
 
 LIB = $(FOAM_LIBBIN)/libeulerianInterfacialCompositionModels

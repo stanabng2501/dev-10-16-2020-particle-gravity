@@ -48,22 +48,42 @@ Foam::bulkNucleationModel::bulkNucleationModel
 )
 :
     pair_(pair),
-    WcrkTNmin_(dict.lookup<scalar>("WcrkTNmin")),
+    WcrkTNmin2_(dict.lookup<scalar>("WcrkTNmin2")),
     WcrkTDelta_(dict.lookup<scalar>("WcrkTDelta")),    
     WcrFrac_(dict.lookup<scalar>("WcrFrac")),
-    D32_(dict.lookupOrDefault<scalar>("D32",1e-4)),   
-    pSat_("pSat", dimPressure, dict),  
-    rhoVSat_("rhoVSat", dimDensity, dict),     
-    rhoLSat_("rhoLSat", dimDensity, dict),     
-    saturationModel_
+    D32_(dict.lookupOrDefault<scalar>("D32",1e-4)),     
+    saturationTmodel_
+    (
+        saturationModel::New
+        (
+            dict.subDict("saturationTemperature"),
+            pair
+        )
+    ),
+    saturationPmodel_
     (
         saturationModel::New
         (
             dict.subDict("saturationPressure"),
             pair
         )
-    )
-    
+    ),
+    saturationRho1model_
+    (
+        saturationDensityModel::New
+        (
+            dict.subDict("saturationRho1Density"),
+            pair
+        )
+    ), 
+    saturationRho2model_
+    (
+        saturationDensityModel::New
+        (
+            dict.subDict("saturationRho2Density"),
+            pair
+        )
+    )             
 {
    
 }
@@ -113,7 +133,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarFi
            );
     meshVol.ref() =   pair_.phase1().mesh().V(); 
     
-    const volScalarField pSat(saturationModel_->pSat(T1));
+    const volScalarField pSat(saturationPmodel_->pSat(T1));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
 
@@ -181,7 +201,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarFi
      forAll(dmdtf, celli)
     {   
     
-       if(WcrkTN[celli] > WcrkTNmin_  ) 
+       if(WcrkTN[celli] > WcrkTNmin2_  ) 
          {
            dmdtf[celli] = Ja[celli]*meshVol[celli]*rho1[celli]*D32vol[celli];   
             ++ ncvs ;
@@ -209,7 +229,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::pSat
     const volScalarField& T 
 ) const
 {
-    return saturationModel_->pSat(T);
+    return saturationPmodel_->pSat(T);
 }
 
 Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
@@ -217,21 +237,28 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
     const volScalarField& p
 ) const
 {
-    return saturationModel_->Tsat(p);
+    return saturationTmodel_->Tsat(p);
 }
 
 
 // This is fixed
- Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::calcWcrkTN( ) const
+ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::calcWcrkTN2( ) const
 {
      const phaseModel& phase1 = pair_.phase1();
- //    const phaseModel& phase2 = pair_.phase2();
+     const phaseModel& phase2 = pair_.phase2();
+     const rhoThermo& thermo2 = phase2.thermo();
      const rhoThermo& thermo1 = phase1.thermo();
  //    const rhoThermo& thermo2 = phase2.thermo();
-     const volScalarField& T1(thermo1.T());
+     const volScalarField& T2(thermo2.T());
  //    const volScalarField& rho1(thermo1.rho());
  //    const volScalarField& rho2(thermo2.rho());
      const volScalarField& p(thermo1.p());
+     const volScalarField pSat(saturationPmodel_->pSat(T2));
+     
+     const volScalarField rho1Sat(saturationRho1model_->rhoSat(T2)); 
+            
+     const volScalarField rho2Sat(saturationRho2model_->rhoSat(T2));  
+ 
      const volScalarField sigma
                      (
                        pair_.phase1().fluid().lookupSubModel<surfaceTensionModel>
@@ -244,7 +271,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
       
            
-    volScalarField rc((2*sigma)/ ( (1-(rhoVSat_/rhoLSat_))* (pSat_-p))); 
+    volScalarField rc((2*sigma)/ ( (1-(rho1Sat/rho2Sat))*(pSat-p)));  //pSat was pSat_, rho1Sat  was rhoVSat, rho2Sat was rhoLSat_, 
  
   
 //    Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
@@ -264,19 +291,19 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
                         4
                         *constant::mathematical::pi
                         *pow(rc,3.0)
-                        *rhoVSat_
+                        *rho1Sat
                         *1000
                         *Av
                         /(3*thermo1.W()) 
                       );
                                  
-    return (Wcr/(Nc*k*T1));
+    return (Wcr/(Nc*k*T2));
 }
 
 
-Foam::scalar Foam::bulkNucleationModel::WcrkTNmin( ) const
+Foam::scalar Foam::bulkNucleationModel::WcrkTNmin2( ) const
 {
-    return WcrkTNmin_;
+    return WcrkTNmin2_;
 }
 
 

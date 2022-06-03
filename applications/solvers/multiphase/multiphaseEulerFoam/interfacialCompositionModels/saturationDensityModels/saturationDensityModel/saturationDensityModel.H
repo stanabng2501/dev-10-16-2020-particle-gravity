@@ -22,79 +22,100 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::surfaceTensionModels::constantSurfaceTensionCoefficient
+    Foam::saturationModel
 
 Description
-    Constant value surface tension model.
 
 SourceFiles
-    constantSurfaceTensionCoefficient.C
+    saturationDensityModel.C
+    saturationDensityModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantSurfaceTensionCoefficient_H
-#define constantSurfaceTensionCoefficient_H
+#ifndef saturationDensityModel_H
+#define saturationDensityModel_H
 
-#include "surfaceTensionModel.H"
+#include "IOdictionary.H"
+#include "volFields.H"
+#include "dictionary.H"
+#include "runTimeSelectionTables.H"
+#include "phasePair.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace surfaceTensionModels
-{
 
 /*---------------------------------------------------------------------------*\
-              Class constantSurfaceTensionCoefficient Declaration
+                       Class saturationModel Declaration
 \*---------------------------------------------------------------------------*/
 
-class constantSurfaceTensionCoefficient
+class saturationDensityModel
 :
-    public surfaceTensionModel
+    public IOdictionary
 {
-    // Private Data
-
-        //- Constant surface tension value
-        const dimensionedScalar sigma_;
-
-
 public:
 
     //- Runtime type information
-    TypeName("constant");
+    TypeName("saturationDensityModel");
+
+
+    //- Declare runtime construction
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        saturationDensityModel,
+        dictionary,
+        (
+            const dictionary& dict, const phasePair& pair
+        ),
+        (dict, pair)
+    );
 
 
     // Constructors
 
-        //- Construct from a dictionary and a phase pair
-        constantSurfaceTensionCoefficient
+        //- Construct null
+        saturationDensityModel(const phasePair& pair);
+
+        //- Disallow default bitwise copy construction
+        saturationDensityModel(const saturationDensityModel&) = delete;
+
+
+    // Selectors
+
+        //- Select null constructed
+        static autoPtr<saturationDensityModel> New
         (
             const dictionary& dict,
-            const phasePair& pair,
-            const bool registerObject
+            const phasePair& pair
         );
 
 
     //- Destructor
-    virtual ~constantSurfaceTensionCoefficient();
+    virtual ~saturationDensityModel();
 
 
     // Member Functions
 
+        //- Saturation density
+        virtual tmp<volScalarField> rhoSat
+        (
+            const volScalarField& T
+        ) const = 0;
 
- 
-        
-        //- Surface tension
-        virtual tmp<volScalarField> sigma() const;
+  
 
-        //- Surface tension for a patch
-        virtual tmp<scalarField> sigma(label patchi) const;
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const saturationDensityModel&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace surfaceTensionModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

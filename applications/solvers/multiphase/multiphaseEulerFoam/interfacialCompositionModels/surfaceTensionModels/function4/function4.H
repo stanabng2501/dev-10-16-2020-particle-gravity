@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2015-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2017-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,20 +22,61 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::surfaceTensionModels::constantSurfaceTensionCoefficient
+    Foam::saturationModels::function2
 
 Description
-    Constant value surface tension model.
+    Saturation vapour temperature in terms of
+    the vapour pressure (in Pa). The saturation temperature in Kelvins is
+    specified as a Foam::Function2 type, to enable use of, e.g. constant,
+    polynomial, table values.
+
+    Currently this class only provides \f$T_sat\f$, the inverse function to
+    return the vapour pressure for a given temperature are not implemented.
+
+    Examples:
+
+    \verbatim
+        type function2;
+        function polynomial
+        (
+            (308.0422       0)
+            (0.0015096      1)
+            (-1.61589e-8    2)
+            (1.114106e-13   3)
+            (-4.52216e-19   4)
+            (1.05192e-24    5)
+            (-1.2953e-30    6)
+            (6.5365e-37     7)
+        )
+    \endverbatim
+
+    \verbatim
+        type function2;
+        function tableFile;
+        functionCoeffs
+        {
+            file                "filename.csv";
+            format              csv;
+            nHeaderLine         1;
+            refColumn           0;
+            componentColumns    (1);
+            separator           ",";
+            mergeSeparators     no;
+            outOfBounds         clamp;
+            interpolationScheme linear;
+        };
+    \endverbatim
 
 SourceFiles
-    constantSurfaceTensionCoefficient.C
+    function2.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantSurfaceTensionCoefficient_H
-#define constantSurfaceTensionCoefficient_H
+#ifndef function2_H
+#define function2_H
 
 #include "surfaceTensionModel.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,29 +86,33 @@ namespace surfaceTensionModels
 {
 
 /*---------------------------------------------------------------------------*\
-              Class constantSurfaceTensionCoefficient Declaration
+                          Class function2 Declaration
 \*---------------------------------------------------------------------------*/
 
-class constantSurfaceTensionCoefficient
+class function4
 :
     public surfaceTensionModel
 {
     // Private Data
+        //- Name of phase whose temperature is used for interpolation
+        word phaseName_;
 
-        //- Constant surface tension value
-        const dimensionedScalar sigma_;
+ 
+        
+        
+        //- Saturation temperature as a function of pressure
+        autoPtr<Function1<scalar>> function_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("constant");
-
+    TypeName("function4");
 
     // Constructors
 
-        //- Construct from a dictionary and a phase pair
-        constantSurfaceTensionCoefficient
+        //- Construct from a dictionary
+        function4
         (
             const dictionary& dict,
             const phasePair& pair,
@@ -76,25 +121,25 @@ public:
 
 
     //- Destructor
-    virtual ~constantSurfaceTensionCoefficient();
+    virtual ~function4();
 
 
     // Member Functions
 
+  
 
- 
-        
         //- Surface tension
         virtual tmp<volScalarField> sigma() const;
 
         //- Surface tension for a patch
         virtual tmp<scalarField> sigma(label patchi) const;
+ 
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace surfaceTensionModels
+} // End namespace saturationModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

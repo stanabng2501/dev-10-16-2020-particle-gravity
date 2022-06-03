@@ -251,8 +251,8 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             volScalarField& dmdtf(*this->dmdtfs_[pair]);
             volScalarField L(this->L(pair, dmdtf, T2, latentHeatScheme::symmetric));
 
-            const volScalarField Tsat(saturationModelIter()->Tsat(p));  
-            const volScalarField WcrkTN(saturationModelIter()->calcWcrkTN( ));   
+            const volScalarField Tsat(saturationModelIter()->Tsat(p));                 
+            const volScalarField WcrkTN2(saturationModelIter()->calcWcrkTN2( ));   
             volScalarField H1(this->heatTransferModels_[pair].first()->K());
             volScalarField H2(this->heatTransferModels_[pair].second()->K());
 
@@ -297,12 +297,12 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             const scalar dmdtfRelaxAdd =
                 this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition");   
             const  scalar& WcrkTDelta(saturationModelIter()->WcrkTDelta());            
-            const  scalar& WcrkTNmin(saturationModelIter()->WcrkTNmin());
+            const  scalar& WcrkTNmin2(saturationModelIter()->WcrkTNmin2());
             
-            WcrLimit = WcrkTNmin - WcrkTDelta;
+            WcrLimit = WcrkTNmin2 - WcrkTDelta;
            
             // blending factor 
-            volScalarField factor =  (WcrkTN - WcrLimit)/ (2.0* WcrkTDelta) ;  
+            volScalarField factor =  (WcrkTN2 - WcrLimit)/ (2.0* WcrkTDelta) ;  
             factor = max( min (factor,1.0), 0.0);
  
             Info << "Factor   min = " << min(factor.primitiveField())
@@ -317,12 +317,12 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
          // setting Wcr Limits
            if(WcrFrac <1)
              {
-                WcrLimit  =max( WcrkTNmin , (1-WcrFrac)*max(WcrkTN.primitiveField()) ) ;
+                WcrLimit  =max( WcrkTNmin2 , (1-WcrFrac)*max(WcrkTN.primitiveField()) ) ;
              }
              
            else
              {
-               WcrLimit = WcrkTNmin;
+               WcrLimit = WcrkTNmin2;
              }                     
  */         
  
@@ -332,7 +332,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             scalar dmdtfNewVal = 0.0;                            
             forAll(dmdtf, celli)
              {     
-               if(WcrkTN[celli] > WcrLimit ) 
+               if(WcrkTN2[celli] > WcrLimit ) 
                {
                
                  dmdtfNewVal =  factor[celli]*(H1[celli]*(Tsat[celli] - T1[celli]) + H2[celli]*(Tsat[celli] - T2[celli]))/L[celli]; 
@@ -358,15 +358,15 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 << ",  p max = " << max(p.primitiveField())
                 <<endl;
                 
-           Info << "WcrkTN   min = " << min(WcrkTN.primitiveField())
-                << ", WcrkTN   max = " << max(WcrkTN.primitiveField())
+           Info << "WcrkTN 2   min = " << min(WcrkTN2.primitiveField())
+                << ", WcrkTN 2  max = " << max(WcrkTN2.primitiveField())
                 << ", Wcr Limit = " << WcrLimit
                 << endl;
                 
- //            Info<< "Latent Heat  min = " << min(L.primitiveField())
- //                << ", mean = " << average(L.primitiveField())
- //                << ", max = " << max(L.primitiveField())
- //                << endl;
+              Info<< "Latent Heat  min = " << min(L.primitiveField())
+                 << ", mean = " << average(L.primitiveField())
+                  << ", max = " << max(L.primitiveField())
+                 << endl;
                 
                  
             Info<< dmdtf.name()
