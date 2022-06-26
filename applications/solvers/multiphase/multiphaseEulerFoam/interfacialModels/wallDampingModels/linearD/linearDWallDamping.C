@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2015-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,71 +23,58 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "linearNb.H"
+#include "linearDWallDamping.H"
+#include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace diameterModels
+namespace wallDampingModels
 {
-    defineTypeNameAndDebug(linearNb, 0);
-    addToRunTimeSelectionTable(diameterModel, linearNb, dictionary);
+    defineTypeNameAndDebug(linearD, 0);
+    addToRunTimeSelectionTable
+    (
+        wallDampingModel,
+        linearD,
+        dictionary
+    );
 }
 }
 
 
-// * * * * * * * * * * * * Protected Member Functions * * * * * * * * * * * //
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::diameterModels::linearNb::calcD() const
+Foam::tmp<Foam::volScalarField>
+Foam::wallDampingModels::linearD::limiter() const
 {
-    return d_;
+    return
+        min
+        (
+            max(yWall() - zeroWallDist_, dimensionedScalar(dimLength, 0))
+           /(Cd_*d_), scalar(1)
+        );
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::diameterModels::linearNb::linearNb
+Foam::wallDampingModels::linearD::linearD
 (
-    const dictionary& diameterProperties,
-    const phaseModel& phase
+    const dictionary& dict,
+    const phasePair& pair
 )
 :
-    spherical(diameterProperties, phase),
-    dmin_("dmin", dimLength, diameterProperties),
-    nB_("nB", dimensionSet(0, -3, 0, 0, 0), diameterProperties),
-    d_(dRef()),
-    dmax_(pow(6/(nB_* constant::mathematical::pi) , 1.0/3.0)) 
-{
-    d_ = dmin_;
-}
+    wallDampingModel(dict, pair),
+    d_("d", dimLength, dict)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::diameterModels::linearNb::~linearNb()
+Foam::wallDampingModels::linearD::~linearD()
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::diameterModels::linearNb::correct()
-{
-    d_ = dmin_ + phase()*(dmax_ - dmin_) ;        
-}
-
-
-bool Foam::diameterModels::linearNb::read(const dictionary& phaseProperties)
-{
-    spherical::read(phaseProperties);
-
-    diameterProperties().lookup("dmin") >> dmin_;
-    diameterProperties().lookup("nB") >> nB_;
-    diameterProperties().lookup("dmax_") >> dmax_;
-
-    return true;
-}
 
 
 // ************************************************************************* //

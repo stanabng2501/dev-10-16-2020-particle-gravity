@@ -64,6 +64,7 @@ Foam::liftModel::~liftModel()
 
 Foam::tmp<Foam::volVectorField> Foam::liftModel::Fi() const
 {
+ 
     return
         Cl()
        *pair_.continuous().rho()
