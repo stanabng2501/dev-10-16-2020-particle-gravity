@@ -354,26 +354,25 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 << ",  Total nucleating volume = " << nucvol 
                 << endl;
 
-           Info << "p min = " << min(p.primitiveField()) 
-                << ",  p max = " << max(p.primitiveField())
+           Info << "p min = " << min(p).value() 
+                << ",   max = " << max(p).value()
                 <<endl;
                 
-           Info << "WcrkTN 2   min = " << min(WcrkTN2.primitiveField())
-                << ", WcrkTN 2  max = " << max(WcrkTN2.primitiveField())
+           Info << "WcrkTN 2   min = " << min(WcrkTN2).value()
+                << ", WcrkTN 2  max = " << max(WcrkTN2).value()
                 << ", Wcr Limit = " << WcrLimit
                 << endl;
                 
-              Info<< "Latent Heat  min = " << min(L.primitiveField())
-                 << ", mean = " << average(L.primitiveField())
-                  << ", max = " << max(L.primitiveField())
+              Info<< "Latent Heat  min = " << min(L).value()
+                  << ", max = " << max(L).value()
                  << endl;
                 
                  
             Info<< dmdtf.name()
-                << ": min = " << min(dmdtf.primitiveField())
-                << ", mean = " << average(dmdtf.primitiveField())
-                << ", max = " << max(dmdtf.primitiveField())
-                << ", sum = " << sum (dmdtf.primitiveField()) //fvc::domainIntegrate(dmdtf).value()
+                << ": min = " << min(dmdtf ).value()
+                << ", mean = " << average(dmdtf).value()
+                << ", max = " << max(dmdtf ).value()
+                << ", sum = " << sum (dmdtf).value()//fvc::domainIntegrate(dmdtf).value()
                 << endl;
                 
             Info << "---------------------------------------------------------------------------------------------" <<endl;    
