@@ -295,7 +295,9 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             const scalar dmdtfRelaxRem =
                 this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal"); 
             const scalar dmdtfRelaxAdd =
-                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition");   
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition"); 
+            const scalar dmdtfMax =
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Max");        
             const  scalar& WcrkTDelta(saturationModelIter()->WcrkTDelta());            
             const  scalar& WcrkTNmin2(saturationModelIter()->WcrkTNmin2());
             
@@ -329,14 +331,18 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
    
             label  ncvs  = 0;
             scalar nucvol = 0.0; 
-            scalar dmdtfNewVal = 0.0;                            
+            scalar dmdtfNewVal; 
+            scalar dmdtfOldVal;                             
             forAll(dmdtf, celli)
              {     
                if(WcrkTN2[celli] > WcrLimit ) 
                {
-               
+                 dmdtfNewVal = 0.0; 
+                 dmdtfOldVal = dmdtf[celli];
                  dmdtfNewVal =  factor[celli]*(H1[celli]*(Tsat[celli] - T1[celli]) + H2[celli]*(Tsat[celli] - T2[celli]))/L[celli]; 
-                 dmdtf[celli] = (1 - dmdtfRelaxAdd)*dmdtf[celli] + dmdtfRelaxAdd*dmdtfNewVal;  
+                 
+                 dmdtfNewVal= min( dmdtfNewVal, dmdtfMax);
+                 dmdtf[celli] = (1 - dmdtfRelaxAdd)*dmdtfOldVal  + dmdtfRelaxAdd*dmdtfNewVal;  
                  ++ ncvs ;
                  nucvol += meshVol[celli];     
                 }
@@ -372,7 +378,7 @@ Foam::LimitedEvaporationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 << ": min = " << min(dmdtf ).value()
                 << ", mean = " << average(dmdtf).value()
                 << ", max = " << max(dmdtf ).value()
-                << ", sum = " << sum (dmdtf).value()//fvc::domainIntegrate(dmdtf).value()
+                << ", sum = " << sum(dmdtf).value()//fvc::domainIntegrate(dmdtf).value()
                 << endl;
                 
             Info << "---------------------------------------------------------------------------------------------" <<endl;    
