@@ -48,10 +48,12 @@ Foam::bulkNucleationModel::bulkNucleationModel
 )
 :
     pair_(pair),
-    WcrkTNmin2_(dict.lookup<scalar>("WcrkTNmin2")),
-    WcrkTDelta_(dict.lookup<scalar>("WcrkTDelta")),    
-    WcrFrac_(dict.lookup<scalar>("WcrFrac")),
-    D32_(dict.lookupOrDefault<scalar>("D32",1e-4)),     
+    WcrkTNmin2_(dict.lookupOrDefault<scalar>("WcrkTNmin2",0.03)),
+    WcrkTDelta_(dict.lookupOrDefault<scalar>("WcrkTDelta",0.001)),    
+    WcrFrac_(dict.lookupOrDefault<scalar>("WcrFrac",1)),
+    dNuc_(dict.lookupOrDefault<scalar>("dNuc",1e-4)),  
+    n_(dict.lookupOrDefault<scalar>("n",1)), 
+    phi_(dict.lookupOrDefault<scalar>("phi",1)), 
     saturationTmodel_
     (
         saturationModel::New
@@ -98,7 +100,7 @@ Foam::bulkNucleationModel::~bulkNucleationModel()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 // This has many errors
-Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarField& dmdtf ) const
+Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1( ) const
 {
 
      const phaseModel& phase1 = pair_.phase1();
@@ -141,14 +143,16 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarFi
     
     volScalarField L(thermo1.ha()-thermo2.ha());
     
-      Info<< " Latent heat mean  = " << average(L.primitiveField()) <<endl;
+//      Info<< " Latent heat mean  = " << average(L.primitiveField()) <<endl;
     
     volScalarField rc ((2*sigma)/ ( (1-(rho1/rho2))* (pSat-p))); 
  
-    Info<< "rc   min = " << min(rc.primitiveField()) << "  rc   max = " << max(rc.primitiveField()) <<  "  rc  dimensions = " << rc.dimensions() <<endl;
+//    Info<< "rc   min = " << min(rc.primitiveField()) << "  rc   max = " << max(rc.primitiveField()) <<  "  rc  dimensions = " << rc.dimensions() <<endl;
 
-    Info<< "p   min = " << min(p.primitiveField()) << "  p   max = " << max(p.primitiveField()) <<  "  p  dimensions = " << p.dimensions() <<endl;   
-     const dimensionedScalar rctemp(dimLength,0.01); // setting all negative values to 0.01
+    Info << "p   min = " << min(p).value() 
+         << "  p   max = " << max(p).value() 
+         <<endl;   
+   
    
      forAll(rc, celli)
     { 
@@ -159,67 +163,26 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(volScalarFi
         }    
     }
       
-    Info<< "rc   min = " << min(rc.primitiveField()) << "  rc   max = " << max(rc.primitiveField()) <<  "  rc  dimensions = " << rc.dimensions() <<endl;
+ //   Info<< "rc   min = " << min(rc.primitiveField()) << "  rc   max = " << max(rc.primitiveField()) <<  "  rc  dimensions = " << rc.dimensions() <<endl;
  
-    volScalarField Wcr ( 4*constant::mathematical::pi*sqr(rc)*sigma/3);    
+    const volScalarField WcrkTNPhi =    phi_*4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);    
          
-    volScalarField kT (k*T1);
-                                                              
-    volScalarField WcrkTN ( 
-                              (4*constant::mathematical::pi*sqr(rc)*sigma/3)/   
-                              (k*T1*(4/3)*constant::mathematical::pi*pow(rc,3)*rho1*(1000/thermo1.W())*Av )                              
-                            );   
-     
-    volScalarField Ja ( 
-                           (1000/thermo1.W())*Av* rho2 *
-                           B(phase1, phase2,pSat, "dmdts2to1") * //B function
-                           exp (-WcrkTN) * 
-                           (1-exp(-( sigma*thermo1.W()/ (kT *rho1*1000*Av))/rc))                    // distribution percentage                            
-                         );     
- //     Info<< "Ja   min = " << min(Ja.primitiveField()) << "  Ja   max = " << max(Ja.primitiveField()) <<  "  Ja  dimensions = " << Ja.dimensions() <<endl;
+//    Info<< "WcrkTN    min = " << min(WcrkTN .primitiveField()) << "  WcrkTN    max = " << max(WcrkTN .primitiveField()) <<  "  WcrkTN   dimensions = " << WcrkTN .dimensions() <<endl;         
+ //   const volScalarField Ba (B(phase1, phase2,pSat, "dmdts2to1") ); 
+    
+ //    const volScalarField expWktn= exp(-WcrkTN);
+//     Info<< "Ba   min = " << min(Ba.primitiveField()) << "  Ba   max = " << max(Ba.primitiveField()) <<  "  Ba  dimensions = " << Ba.dimensions() <<endl;         
+//      Info<< "expWktn   min = " << min(expWktn.primitiveField()) << "  expWktn   max = " << max(expWktn.primitiveField()) <<  "  expWktn  dimensions = " << expWktn.dimensions() <<endl;             
+    const volScalarField Ja =    (1000/thermo1.W())*Av* rho2 * B(phase1, phase2,pSat, "dmdts2to1") * exp(-WcrkTNPhi);  
+                         
+                     
+//     Info<< "Ja   min = " << min(Ja.primitiveField()) << "  Ja   max = " << max(Ja.primitiveField()) <<  "  Ja  dimensions = " << Ja.dimensions() <<endl;
  
+    const scalar dNucVol = (4/3) *constant::mathematical::pi * pow((dNuc_/2),3.0) ;
+          
+           
   
-    volScalarField D32vol   
-           (
-             IOobject
-              (
-                 "meshVol",
-                  pair_.phase1().mesh().time().timeName(),
-                  pair_.phase1().mesh(),
-                  IOobject::NO_READ,
-                  IOobject::NO_WRITE
-               ),
-              pair_.phase1().mesh(),
-              dimensionedScalar( dimVolume, D32_)  
-    
-           );
-           
-           
- 
-     label  ncvs  = 0;
-      scalar nucvol = 0.0;
-     forAll(dmdtf, celli)
-    {   
-    
-       if(WcrkTN[celli] > WcrkTNmin2_  ) 
-         {
-           dmdtf[celli] = Ja[celli]*meshVol[celli]*rho1[celli]*D32vol[celli];   
-            ++ ncvs ;
-           nucvol += meshVol[celli];     
-         }
-    }
-    
-    Info << "Total Nucleating CV's = " << ncvs 
-          << ",  Total nucleating volume = " << nucvol 
-          << endl;
- 
-    Info  << "WcrkTN values"
-           << ": min = " << min(WcrkTN.primitiveField())
-           << ", mean = " << average(WcrkTN.primitiveField())
-           << ", max = " << max(WcrkTN.primitiveField())
-           << endl;
-    
-     return dmdtf;
+     return phase2*Ja*meshVol*rho1*dNucVol ;
 }
 
 

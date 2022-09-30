@@ -97,15 +97,22 @@ Foam::bulkNucleationModels::Doring::B
                              phasePair(phase1, phase2)
                           ).sigma()
                       );
-    const volScalarField pg( p+(pSat-p)*(1-rho1/rho2) ) ;
+ //   Info<< "sigma = " << min(sigma.primitiveField()) << "  sigma   max = " << max(sigma.primitiveField()) <<  " sigma  dimensions = " << sigma.dimensions() <<endl;                              
+    const volScalarField pg =  p+(pSat-p)*(1-rho1/rho2)  ;
                    
     volScalarField b(p/pg) ; 
-    b.max(small);
+//    b.max(small);
+//    Info<< "b  min = " << min(b.primitiveField()) << "  b   max = " << max(b.primitiveField()) <<  "  b  dimensions = " << b.dimensions() <<endl;
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number  
-    const volScalarField lkT( ((thermo1.ha() - thermo2.ha())*thermo1.W()) / (k*T1*1000*Av )  );
-            
-    return ( exp(-lkT) *sqrt( 1000*Av*6*sigma/((3-b)* constant::mathematical::pi*thermo1.W())) );
+    const volScalarField w1molecule =  thermo1.W()/ (1000*Av);
+    const volScalarField explkT =  exp((thermo1.ha() - thermo2.ha())*w1molecule/ (-k*T1 ))  ;
+
+ //    Info<< "w1molecule  = " << min(w1molecule .primitiveField()) << "  w1molecule    max = " << max(w1molecule .primitiveField()) <<  " w1molecule   dimensions = " << w1molecule .dimensions() <<endl;           
+    const volScalarField factor = sqrt(6*sigma /((3-b) * constant::mathematical::pi*w1molecule ));
+
+ //    Info<< "explkT = " << min(explkT.primitiveField()) << "  explkT   max = " << max(explkT.primitiveField()) <<  " explkT  dimensions = " << explkT.dimensions() <<endl;           
+    return explkT*factor;
             
  } 
 

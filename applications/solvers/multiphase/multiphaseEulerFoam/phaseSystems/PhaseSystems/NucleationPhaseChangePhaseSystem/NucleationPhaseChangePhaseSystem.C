@@ -143,6 +143,7 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::
 
 // * * * * * * *Energy/dimMass * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+/*
 template<class BasePhaseSystem>
 const Foam::bulkNucleationModel&
 Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::nucleation
@@ -152,7 +153,7 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::nucleation
 {
     return nucleationModels_[key];
 }
-
+*/
 
 template<class BasePhaseSystem>
 Foam::tmp<Foam::volScalarField>
@@ -190,44 +191,64 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
     )
     {
           const phasePair& pair = this->phasePairs_[nucleationModelIter.key()];
- 
 
-        // Interfacial mass transfer update
-        {
-        
-            volScalarField& dmdtf(*this->dmdtfs_[pair]); 
- 
-            volScalarField dmdtfNew 
-                             (
-                                IOobject
-                                (
-                                   IOobject::groupName("dmdtfNew", pair.name()),
-                                    this->mesh().time().timeName(),
-                                    this->mesh(),
-                                    IOobject::NO_READ,
-                                    IOobject::NO_WRITE
-                                 ),
-                                 this->mesh(),
-                                 dimensionedScalar( dmdtf.dimensions(), 0.0)     
-                              );
+          volScalarField& dmdtf(*this->dmdtfs_[pair]); 
+          volScalarField dmdtfNew 
+            (
+             IOobject
+              (
+                 "dmdtfNew ",
+                  pair.phase1().mesh().time().timeName(),
+                  pair.phase1().mesh(),
+                  IOobject::NO_READ,
+                  IOobject::NO_WRITE
+               ),
+              pair.phase1().mesh(),
+              dimensionedScalar( dmdtf.dimensions(), Zero)  
     
-                
-             dmdtfNew  +=  nucleationModelIter()->dmdts2to1(dmdtfNew);
-
-            const scalar dmdtfRelax =
+           );
+        
+         const scalar dmdtfRelax =
                 this->mesh().fieldRelaxationFactor(dmdtf.member());
+         const dimensionedScalar dmdtfMax ( dmdtf.dimensions(),
+                                            this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Max") 
+                                          );         
+        forAllConstIter(phasePair, pair, pairIter)
+        {
+            const label sign = pairIter.index() == 0 ? 1 : -1;
+            const autoPtr<bulkNucleationModel>& bulkNucleationModelPtr =
+                nucleationModelIter()[pairIter.index()];
+                
+           if (!bulkNucleationModelPtr.valid()) continue;
+           
+           if (sign ==1)
+            {
+            const volScalarField dmdtfNew1(nucleationModels_[pair][pairIter.index()]->dmdts2to1());
+            dmdtfNew +=sign*dmdtfNew1;
+            }
+            
+            else
+            {
+        //    replace this by  dmdts1to2         
+            const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts2to1());
+            dmdtfNew +=sign*dmdtfNew2;
+            }
+                      
+
+        }
 
             dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
-
+            dmdtf = min( dmdtf, dmdtfMax);
                 
                 
             Info<< dmdtf.name()
                 << ": min = " << min(dmdtf.primitiveField())
                 << ", mean = " << average(dmdtf.primitiveField())
                 << ", max = " << max(dmdtf.primitiveField())
-                << ", integral = " << fvc::domainIntegrate(dmdtf).value()
+                << ", sum = " << sum(dmdtf).value()
                 << endl;
-        }
+                
+            Info << " ------------------------------------------------" << endl;            
      }
 
     // adding dmdtfs_ to dmdts()

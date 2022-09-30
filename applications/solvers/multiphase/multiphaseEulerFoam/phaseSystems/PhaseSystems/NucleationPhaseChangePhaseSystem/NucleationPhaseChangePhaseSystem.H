@@ -61,7 +61,7 @@ class NucleationPhaseChangePhaseSystem
 
         typedef HashTable
         <
-            autoPtr<bulkNucleationModel>,
+            Pair<autoPtr<bulkNucleationModel>>,
             phasePairKey,
             phasePairKey::hash
         > nucleationModelTable;
@@ -103,7 +103,7 @@ public:
     // Member Functions
 
         //- Return the nucleationModel
-        const bulkNucleationModel& nucleation(const phasePairKey& key) const;
+ //       const bulkNucleationModel& nucleation(const phasePairKey& key) const;
 
         //- Return the mass transfer rate for an interface
         virtual tmp<volScalarField> dmdtf(const phasePairKey& key) const;

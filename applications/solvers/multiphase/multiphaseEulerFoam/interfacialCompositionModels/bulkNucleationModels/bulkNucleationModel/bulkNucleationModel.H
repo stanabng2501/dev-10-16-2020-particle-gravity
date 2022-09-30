@@ -69,8 +69,15 @@ class bulkNucleationModel
         //- Depressurization Limit below which nucleation will happen
         const scalar WcrFrac_;
         
-        //- Mean Sauter Diameter of nucleating volume
-         const scalar D32_;
+        //- Nucleating  Diameter  
+         const scalar dNuc_;
+         
+         //- Cluster size in the bubble
+         const scalar n_;
+         
+         // Hetereogenity factor
+         const scalar phi_;
+         
                                 
 protected:
 
@@ -165,10 +172,7 @@ public:
             scalar WcrFrac () const;             
                 
          // return mass transfer from liquid too gas
-         tmp<Foam::volScalarField> dmdts2to1
-              ( 
-                 volScalarField& dmdtf
-               ) const;
+         tmp<Foam::volScalarField> dmdts2to1 () const;
                
          //- B factor
             virtual tmp<volScalarField> B
