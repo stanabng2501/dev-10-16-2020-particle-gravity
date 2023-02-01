@@ -102,7 +102,7 @@ NucleationPhaseChangePhaseSystem
     {
         const phasePair& pair =
             this->phasePairs_[nucleationModelIter.key()];
-
+       hetFac_.insert(pair, new HashPtrTable<volScalarField>());
         dmdtfs_.insert
         (
             pair,
@@ -125,7 +125,38 @@ NucleationPhaseChangePhaseSystem
             )
         );
 
+
+       forAllConstIter(phasePair, pair, pairIter)
+       {
+//          const autoPtr<bulkNucleationModel>& bulkNucleationModelPtr =
+ //               nucleationModelIter()[pairIter.index()];
+ //          if (!bulkNucleationModelPtr.valid()) continue;
  
+           const word& otherPhasename = pairIter.otherPhase().name();
+             
+            hetFac_[pair]->insert
+                (
+                    otherPhasename,
+                    new volScalarField
+                    (
+                        IOobject
+                        (
+                            IOobject::groupName
+                              (
+                                "heteregenous",
+                                otherPhasename
+                              ),
+                            this->mesh().time().timeName(),
+                            this->mesh(),
+                            IOobject::READ_IF_PRESENT,
+                            IOobject::AUTO_WRITE
+                        ),
+                        this->mesh(),
+                        dimensionedScalar(dimless, 1)
+                    )
+                );
+            
+       }
     }
     
     
@@ -193,26 +224,36 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
           const phasePair& pair = this->phasePairs_[nucleationModelIter.key()];
 
           volScalarField& dmdtf(*this->dmdtfs_[pair]); 
-          volScalarField dmdtfNew 
-            (
+          const scalar dmdtfRelaxRem =
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal"); 
+          const scalar dmdtfRelaxAdd =
+                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition"); 
+          const dimensionedScalar dmdtfMax ( dimensionSet(1, 3, 1, 0, 0), 
+                                      this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Max")                                       
+                                       ); 
+         const  dimensionedScalar dmdtfMin ( dimensionSet(1, 3, 1, 0, 0),
+                                      this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Min")                                       
+                                      );       
+ 
+
+         volScalarField dmdtfNew 
+           (
              IOobject
               (
                  "dmdtfNew ",
                   pair.phase1().mesh().time().timeName(),
                   pair.phase1().mesh(),
-                  IOobject::NO_READ,
-                  IOobject::NO_WRITE
-               ),
+                IOobject::NO_READ,
+                 IOobject::NO_WRITE
+              ),
               pair.phase1().mesh(),
-              dimensionedScalar( dmdtf.dimensions(), Zero)  
-    
+            dimensionedScalar( dmdtf.dimensions(), Zero)  
+     
            );
-        
-         const scalar dmdtfRelax =
-                this->mesh().fieldRelaxationFactor(dmdtf.member());
-         const dimensionedScalar dmdtfMax ( dmdtf.dimensions(),
-                                            this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Max") 
-                                          );         
+ 
+ 
+         const  volScalarField dmdtfOld = dmdtf;
+          
         forAllConstIter(phasePair, pair, pairIter)
         {
             const label sign = pairIter.index() == 0 ? 1 : -1;
@@ -220,31 +261,37 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 nucleationModelIter()[pairIter.index()];
                 
            if (!bulkNucleationModelPtr.valid()) continue;
-           
+                        const word& otherPhasename = pairIter.otherPhase().name();
+             const volScalarField& phi ( *(*hetFac_[pair] )[otherPhasename]);      
+             Info << "Heteregenous "<< otherPhasename << ", phi min " << min(phi).value() 
+                  << ", phi max " << max(phi).value()
+                 <<endl;            
+              
            if (sign ==1)
             {
-            const volScalarField dmdtfNew1(nucleationModels_[pair][pairIter.index()]->dmdts2to1());
-            dmdtfNew +=sign*dmdtfNew1;
+             const volScalarField dmdtfNew1(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
+             dmdtfNew  += sign*(dmdtfNew1);
+//            dmdtfNew  += sign*((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew1);
             }
             
             else
             {
         //    replace this by  dmdts1to2         
-            const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts2to1());
-            dmdtfNew +=sign*dmdtfNew2;
+             const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
+             dmdtfNew  += sign*(dmdtfNew2);
+   
             }
                       
 
-        }
-
-            dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
-            dmdtf = min( dmdtf, dmdtfMax);
-                
-                
+        }   
+ 
+           dmdtf = pos(dmdtfNew -dmdtfOld) *((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew) +
+                   neg(dmdtfNew -dmdtfOld)*((1 - dmdtfRelaxRem)*dmdtfOld  + dmdtfRelaxRem*dmdtfNew);          
+  //          dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;                
             Info<< dmdtf.name()
-                << ": min = " << min(dmdtf.primitiveField())
-                << ", mean = " << average(dmdtf.primitiveField())
-                << ", max = " << max(dmdtf.primitiveField())
+                << ": min = " << min(dmdtf).value()  
+                << ", mean = " << average(dmdtf).value()  
+                << ", max = " << max(dmdtf).value()  
                 << ", sum = " << sum(dmdtf).value()
                 << endl;
                 

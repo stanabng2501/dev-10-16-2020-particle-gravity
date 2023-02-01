@@ -76,7 +76,7 @@ class bulkNucleationModel
          const scalar n_;
          
          // Hetereogenity factor
-         const scalar phi_;
+   //      const scalar phi_;
          
                                 
 protected:
@@ -172,7 +172,7 @@ public:
             scalar WcrFrac () const;             
                 
          // return mass transfer from liquid too gas
-         tmp<Foam::volScalarField> dmdts2to1 () const;
+         tmp<Foam::volScalarField> dmdts2to1 ( const volScalarField& phi) const;
                
          //- B factor
             virtual tmp<volScalarField> B

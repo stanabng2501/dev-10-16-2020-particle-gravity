@@ -81,6 +81,8 @@ class NucleationPhaseChangePhaseSystem
         phaseSystem::dmdtfTable dmdtfs_;
 
  
+        //- Heteregenity factor
+        phaseSystem::dmidtfTable hetFac_; 
 
       // Private Member Functions
 
