@@ -284,9 +284,18 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                       
 
         }   
+
+            Info<< "New mass transfer rates "
+                << ": min = " << min(dmdtfNew).value()  
+                << ", mean = " << average(dmdtfNew).value()  
+                << ", max = " << max(dmdtfNew).value()  
+                << ", sum = " << sum(dmdtfNew).value()
+                << endl;
  
-           dmdtf = pos(dmdtfNew -dmdtfOld) *((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew) +
-                   neg(dmdtfNew -dmdtfOld)*((1 - dmdtfRelaxRem)*dmdtfOld  + dmdtfRelaxRem*dmdtfNew);          
+           dmdtf = pos0(dmdtfNew -dmdtfOld) *((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew) +
+                   neg(dmdtfNew -dmdtfOld)*( dmdtfRelaxRem*dmdtfOld  + (1-dmdtfRelaxRem)*dmdtfNew);     
+                   
+                        
   //          dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;                
             Info<< dmdtf.name()
                 << ": min = " << min(dmdtf).value()  
