@@ -133,11 +133,11 @@ Foam::tmp<Foam::volScalarField> Foam::dragModel::CdRes() const
 Foam::tmp<Foam::volScalarField> Foam::dragModel::Res() const
 {
     volScalarField Re(pair_.Re());
-     Info<< "Re." << pair_.name()
-         << ": min = " << min(Re.primitiveField())
-         << ": mean = " << average(Re.primitiveField())
-         << ", max = " << max(Re.primitiveField())
-         << endl;
+//     Info<< "Re." << pair_.name()
+ //        << ": min = " << min(Re.primitiveField())
+//         << ": mean = " << average(Re.primitiveField())
+//         << ", max = " << max(Re.primitiveField())
+//         << endl;
     return pair_.Re();
 }
 

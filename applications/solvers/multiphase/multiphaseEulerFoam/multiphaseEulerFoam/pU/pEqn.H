@@ -292,6 +292,8 @@ while (pimple.correct())
         // Option sources
         if (fvOptions.appliesToField(rho.name()))
         {
+ //            Info << "FvOptions applied to "<< rho.name()<<endl;
+//           Info << "result from fvOptions" << min(fvOptions(alpha, rho) & rho) <<endl;
             pEqnComp -= (fvOptions(alpha, rho) & rho)/rho;
         }
 

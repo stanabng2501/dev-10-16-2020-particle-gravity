@@ -98,6 +98,76 @@ Foam::bulkNucleationModel::~bulkNucleationModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+// this is for Nucleation Phase change
+Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::CalcWcrKTN2to1() const
+ 
+ {
+     const phaseModel& phase1 = pair_.phase1();
+     const phaseModel& phase2 = pair_.phase2();
+     const rhoThermo& thermo1 = phase1.thermo();
+     const rhoThermo& thermo2 = phase2.thermo();
+     const volScalarField& T1(thermo1.T());
+     const volScalarField& rho1(thermo1.rho());
+     const volScalarField& rho2(thermo2.rho());
+     const volScalarField& p(thermo1.p());
+     const volScalarField sigma
+                     (
+                       pair_.phase1().fluid().lookupSubModel<surfaceTensionModel>
+                          (
+                             phasePair(pair_.phase1(), pair_.phase2())
+                          ).sigma()
+                     );
+            
+     volScalarField meshVol  
+           (
+             IOobject
+              (
+                 "meshVol",
+                  pair_.phase1().mesh().time().timeName(),
+                  pair_.phase1().mesh(),
+                  IOobject::NO_READ,
+                  IOobject::NO_WRITE
+               ),
+              pair_.phase1().mesh(),
+              dimensionedScalar( dimVolume, small)  
+    
+           );
+    meshVol.ref() =   pair_.phase1().mesh().V(); 
+    
+    const volScalarField pSat(saturationPmodel_->pSat(T1));
+    const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
+    const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
+
+
+    
+    volScalarField L(thermo1.ha()-thermo2.ha());
+    
+//      Info<< " Latent heat mean  = " << average(L.primitiveField()) <<endl;
+    
+    volScalarField rc ((2*sigma)/ ( (1-(rho1/rho2))* (pSat-p))); 
+ 
+//    Info<< "rc   min = " << min(rc.primitiveField()) << "  rc   max = " << max(rc.primitiveField()) <<  "  rc  dimensions = " << rc.dimensions() <<endl;
+
+
+   
+   
+     forAll(rc, celli)
+    { 
+        if(rc[celli] < 0.0) 
+        
+        {
+           rc[celli] =  0.01;      
+        }    
+    }
+      
+ //   Info<< "rc   min = " << min(rc).value()<< "  rc   max = " << max(rc).value() <<  "  rc  dimensions = " << rc.dimensions() <<endl;
+     const volScalarField WcrkTN =     4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);   
+      scalar   WcrLimit = WcrkTNmin2_ + WcrkTDelta_;
+      
+      return min(WcrkTN,WcrLimit);
+ 
+ }
+
  
 Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
  const volScalarField& phi
@@ -174,7 +244,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
      // blending factor 
      volScalarField factor =  ( WcrLimit - WcrkTN)/ (2.0* WcrkTDelta_) ;  
      factor = min( max (factor,0.0), 1.0);     
-     Info<< "factor min = " << min(factor .primitiveField()) << ", factor max = " << max(factor .primitiveField()) <<endl;  
+//     Info<< "factor min = " << min(factor).value() << ", factor max = " <<  max(factor).value() <<endl;  
 
      // calculate the p corressponding to the limit
      

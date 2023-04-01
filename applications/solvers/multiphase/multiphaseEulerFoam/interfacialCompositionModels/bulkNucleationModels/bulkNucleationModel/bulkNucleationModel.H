@@ -173,6 +173,8 @@ public:
                 
          // return mass transfer from liquid too gas
          tmp<Foam::volScalarField> dmdts2to1 ( const volScalarField& phi) const;
+         
+        tmp<Foam::volScalarField> CalcWcrKTN2to1() const;
                
          //- B factor
             virtual tmp<volScalarField> B

@@ -77,10 +77,16 @@ class NucleationPhaseChangePhaseSystem
         //- nucleation models used to evaluate Tsat = Tf
         nucleationModelTable nucleationModels_;
 
-        //- Mass transfer rates
+        //- Actual Mass transfer rates
         phaseSystem::dmdtfTable dmdtfs_;
 
- 
+        // Calculated mass transfer rates
+         phaseSystem::dmdtfTable dmdtfsC_;
+
+        // Calculated mass transfer rates
+         phaseSystem::dmdtfTable WcrKTN2to1_;
+         
+                  
         //- Heteregenity factor
         phaseSystem::dmidtfTable hetFac_; 
 

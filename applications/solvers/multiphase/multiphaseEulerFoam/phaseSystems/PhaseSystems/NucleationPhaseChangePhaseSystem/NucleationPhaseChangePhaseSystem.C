@@ -112,7 +112,29 @@ NucleationPhaseChangePhaseSystem
                 (
                     IOobject::groupName
                     (
-                        "nucleationPhaseChange:dmdtf",
+                        "nucleationPhaseChangeActual:dmdtf",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::AUTO_WRITE
+                ),
+                this->mesh(),
+                dimensionedScalar(dimDensity/dimTime, 0)
+            )
+        );
+
+        dmdtfsC_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "nucleationPhaseChangeCalculated:dmdtf",
                         pair.name()
                     ),
                     this->mesh().time().timeName(),
@@ -126,6 +148,29 @@ NucleationPhaseChangePhaseSystem
         );
 
 
+        WcrKTN2to1_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName
+                    (
+                        "nucleationPhaseChange:WcrKTN2to1",
+                        pair.name()
+                    ),
+                    this->mesh().time().timeName(),
+                    this->mesh(),
+                    IOobject::NO_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                this->mesh(),
+                dimensionedScalar(dimless, 0)
+            )
+        );
+        
+        
        forAllConstIter(phasePair, pair, pairIter)
        {
 //          const autoPtr<bulkNucleationModel>& bulkNucleationModelPtr =
@@ -222,35 +267,29 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
     )
     {
           const phasePair& pair = this->phasePairs_[nucleationModelIter.key()];
+          
+          
+          volScalarField& WcrKTN2to1(*this->WcrKTN2to1_[pair]);
 
-          volScalarField& dmdtf(*this->dmdtfs_[pair]); 
+          volScalarField& dmdtfNew(*this->dmdtfsC_[pair]); 
+          volScalarField& dmdtf(*this->dmdtfs_[pair]);
           const scalar dmdtfRelaxRem =
                 this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal"); 
           const scalar dmdtfRelaxAdd =
                 this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition"); 
-          const dimensionedScalar dmdtfMax ( dimensionSet(1, 3, 1, 0, 0), 
-                                      this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Max")                                       
+          const dimensionedScalar dmdtfMax ( dimensionSet(1, -3, -1, 0, 0), 
+                                      this->mesh().fieldRelaxationFactor(dmdtfNew.member()+ "Max")                                       
                                        ); 
-         const  dimensionedScalar dmdtfMin ( dimensionSet(1, 3, 1, 0, 0),
-                                      this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Min")                                       
+         const  dimensionedScalar dmdtfMin ( dimensionSet(1, -3, -1, 0, 0),
+                                      this->mesh().fieldRelaxationFactor(dmdtfNew.member()+ "Min")                                       
                                       );       
  
-
-         volScalarField dmdtfNew 
-           (
-             IOobject
-              (
-                 "dmdtfNew ",
-                  pair.phase1().mesh().time().timeName(),
-                  pair.phase1().mesh(),
-                IOobject::NO_READ,
-                 IOobject::NO_WRITE
-              ),
-              pair.phase1().mesh(),
-            dimensionedScalar( dmdtf.dimensions(), Zero)  
+        
+          forAll(dmdtfNew, celli)
+           {
+            dmdtfNew[celli] = 0.0;
+           }
      
-           );
- 
  
          const  volScalarField dmdtfOld = dmdtf;
           
@@ -263,12 +302,13 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
            if (!bulkNucleationModelPtr.valid()) continue;
                         const word& otherPhasename = pairIter.otherPhase().name();
              const volScalarField& phi ( *(*hetFac_[pair] )[otherPhasename]);      
-             Info << "Heteregenous "<< otherPhasename << ", phi min " << min(phi).value() 
-                  << ", phi max " << max(phi).value()
-                 <<endl;            
+//             Info << "Heteregenous "<< otherPhasename << ", phi min " << min(phi).value() 
+//                  << ", phi max " << max(phi).value()
+//                 <<endl;            
               
            if (sign ==1)
             {
+              WcrKTN2to1 = nucleationModels_[pair][pairIter.index()]->CalcWcrKTN2to1();
              const volScalarField dmdtfNew1(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
              dmdtfNew  += sign*(dmdtfNew1);
 //            dmdtfNew  += sign*((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew1);
@@ -285,7 +325,8 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
 
         }   
 
-            Info<< "New mass transfer rates "
+         dmdtfNew  = max( min(dmdtfNew,dmdtfMax),dmdtfMin);
+            Info<< "Calculated mass transfer rates "
                 << ": min = " << min(dmdtfNew).value()  
                 << ", mean = " << average(dmdtfNew).value()  
                 << ", max = " << max(dmdtfNew).value()  
