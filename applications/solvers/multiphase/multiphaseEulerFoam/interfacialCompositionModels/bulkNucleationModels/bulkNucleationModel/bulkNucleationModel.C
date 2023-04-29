@@ -220,9 +220,10 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
  
 //    Info<< "rc   min = " << min(rc.primitiveField()) << "  rc   max = " << max(rc.primitiveField()) <<  "  rc  dimensions = " << rc.dimensions() <<endl;
 
-
+     const dimensionedScalar rcMax( dimLength,0.01);
+    rc =neg0(rc)*rcMax + pos(rc)*rc;
    
-   
+/*   
      forAll(rc, celli)
     { 
         if(rc[celli] < 0.0) 
@@ -231,6 +232,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
            rc[celli] =  0.01;      
         }    
     }
+ */ 
       
  //   Info<< "rc   min = " << min(rc).value()<< "  rc   max = " << max(rc).value() <<  "  rc  dimensions = " << rc.dimensions() <<endl;
      const volScalarField WcrkTN =     4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);  
@@ -331,15 +333,19 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::Tsat
  
   
 //    Info<< "gas volume min = " << min(rho1.primitiveField()) << ",  gas volume max = " << max(rho1.primitiveField())  <<endl;     
+     const dimensionedScalar rcMax( dimLength,0.01);
+    rc =neg0(rc)*rcMax + pos(rc)*rc;
+   
+/*   
      forAll(rc, celli)
     { 
-        if(rc[celli] < 0) 
+        if(rc[celli] < 0.0) 
         
         {
            rc[celli] =  0.01;      
         }    
     }
-    
+ */ 
 //   Info<< "rc   min = " << min(rc.primitiveField()) << ",  rc   max = " << max(rc.primitiveField()) <<endl;
    volScalarField Wcr (4*constant::mathematical::pi*sqr(rc)*sigma/3);      
    

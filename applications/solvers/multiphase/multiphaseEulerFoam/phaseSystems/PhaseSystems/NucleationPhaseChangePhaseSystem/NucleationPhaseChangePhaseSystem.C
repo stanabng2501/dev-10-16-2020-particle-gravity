@@ -139,7 +139,7 @@ NucleationPhaseChangePhaseSystem
                     ),
                     this->mesh().time().timeName(),
                     this->mesh(),
-                    IOobject::READ_IF_PRESENT,
+                    IOobject::NO_READ,
                     IOobject::AUTO_WRITE
                 ),
                 this->mesh(),
@@ -317,8 +317,8 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             else
             {
         //    replace this by  dmdts1to2         
-             const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
-             dmdtfNew  += sign*(dmdtfNew2);
+   //          const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
+     //        dmdtfNew  += sign*(dmdtfNew2);
    
             }
                       
