@@ -84,7 +84,7 @@ Foam::bulkNucleationModel::bulkNucleationModel
             dict.subDict("saturationRho2Density"),
             pair
         )
-    )             
+    )           
 {
    
 }
@@ -129,11 +129,19 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::CalcWcrKTN2to1() cons
                   IOobject::NO_WRITE
                ),
               pair_.phase1().mesh(),
-              dimensionedScalar( dimVolume, small)  
+              dimensionedScalar( dimVolume, 0.0)  
     
            );
     meshVol.ref() =   pair_.phase1().mesh().V(); 
-    
+/*    
+    Info<< "meshVol   min = " << min(meshVol).value() 
+        << "  meshVol  max = " << max(meshVol).value() 
+        << endl;
+
+    Info<< "meshVol   min = " << min(meshVol.ref() ) 
+        << "  meshVol  max = " << max(meshVol.ref() )  
+        << endl; 
+*/           
     const volScalarField pSat(saturationPmodel_->pSat(T1));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
@@ -201,10 +209,11 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
                   IOobject::NO_WRITE
                ),
               pair_.phase1().mesh(),
-              dimensionedScalar( dimVolume, small)  
+              dimensionedScalar( dimVolume, 0.0)  
     
            );
     meshVol.ref() =   pair_.phase1().mesh().V(); 
+    
     
     const volScalarField pSat(saturationPmodel_->pSat(T1));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number

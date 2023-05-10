@@ -273,10 +273,14 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
 
           volScalarField& dmdtfNew(*this->dmdtfsC_[pair]); 
           volScalarField& dmdtf(*this->dmdtfs_[pair]);
-          const scalar dmdtfRelaxRem =
-                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal"); 
-          const scalar dmdtfRelaxAdd =
-                this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition"); 
+
+
+        const scalar dmdtfRelax =
+              this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Relax"); 
+//          const scalar dmdtfRelaxRem =
+ //               this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal"); 
+ //         const scalar dmdtfRelaxAdd =
+ //               this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Addition"); 
           const dimensionedScalar dmdtfMax ( dimensionSet(1, -3, -1, 0, 0), 
                                       this->mesh().fieldRelaxationFactor(dmdtfNew.member()+ "Max")                                       
                                        ); 
@@ -290,8 +294,8 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
             dmdtfNew[celli] = 0.0;
            }
      
- 
-         const  volScalarField dmdtfOld = dmdtf;
+        dmdtfNew = Zero;
+ //        const  volScalarField dmdtfOld = dmdtf;
           
         forAllConstIter(phasePair, pair, pairIter)
         {
@@ -333,8 +337,12 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 << ", sum = " << sum(dmdtfNew).value()
                 << endl;
  
-           dmdtf = pos0(dmdtfNew -dmdtfOld) *((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew) +
-                   neg(dmdtfNew -dmdtfOld)*( dmdtfRelaxRem*dmdtfOld  + (1-dmdtfRelaxRem)*dmdtfNew);     
+ 
+         dmdtf =  (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
+ 
+ 
+ //          dmdtf = pos0(dmdtfNew -dmdtfOld) *((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew) +
+//                   neg(dmdtfNew -dmdtfOld)*( dmdtfRelaxRem*dmdtfOld  + (1-dmdtfRelaxRem)*dmdtfNew);     
                    
                         
   //          dmdtf = (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;                

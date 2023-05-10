@@ -77,6 +77,10 @@ class bulkNucleationModel
          
          // Hetereogenity factor
    //      const scalar phi_;
+   
+        // mesh volume
+ //       volScalarField meshVol_;
+        
          
                                 
 protected:

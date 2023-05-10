@@ -140,12 +140,14 @@ void Foam::MomentumTransferPhaseSystem<BasePhaseSystem>::addDmdtUfs
 
         if (!phase1.stationary())
         {
+//           Info << "Phase 1 mass transfer - momentum transfer"<< endl;
             *eqns[phase1.name()] +=
                 dmdtf21*phase2.U() + fvm::Sp(dmdtf12, phase1.URef());
         }
 
         if (!phase2.stationary())
         {
+//          Info << "Phase 2 mass transfer - momentum transfer"<<endl;
             *eqns[phase2.name()] -=
                 dmdtf12*phase1.U() + fvm::Sp(dmdtf21, phase2.URef());
         }
