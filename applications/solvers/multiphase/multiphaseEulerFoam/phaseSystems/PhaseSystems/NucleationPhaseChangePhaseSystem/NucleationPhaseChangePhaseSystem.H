@@ -72,7 +72,8 @@ class NucleationPhaseChangePhaseSystem
 
     // Private data
 
-
+        //- Name of the volatile specie
+        word MassMomentum_;
 
         //- nucleation models used to evaluate Tsat = Tf
         nucleationModelTable nucleationModels_;

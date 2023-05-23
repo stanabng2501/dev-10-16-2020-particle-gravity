@@ -60,7 +60,8 @@ NucleationPhaseChangePhaseSystem
     const fvMesh& mesh
 )
 :
-    BasePhaseSystem(mesh)
+    BasePhaseSystem(mesh),
+    MassMomentum_(this->template lookupOrDefault<word>("MassMomentum", "true"))
 {
     this->generatePairsAndSubModels
     (
@@ -372,9 +373,11 @@ momentumTransfer()
         BasePhaseSystem::momentumTransfer();
 
     phaseSystem::momentumTransferTable& eqns = eqnsPtr();
+   if (MassMomentum_ == "true")
+    {
 
     this->addDmdtUfs(dmdtfs_, eqns);
-
+    }
     return eqnsPtr;
 }
 
@@ -388,8 +391,13 @@ momentumTransferf()
         BasePhaseSystem::momentumTransferf();
 
     phaseSystem::momentumTransferTable& eqns = eqnsPtr();
+   if (MassMomentum_ == "true")
+    {
 
-    this->addDmdtUfs(dmdtfs_, eqns);
+      this->addDmdtUfs(dmdtfs_, eqns);
+ 
+    }
+    
 
     return eqnsPtr;
 }
