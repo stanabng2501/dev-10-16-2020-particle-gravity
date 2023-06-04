@@ -56,7 +56,7 @@ Foam::bulkNucleationModel::bulkNucleationModel
     bFactor_(dict.lookupOrDefault<bool>("bubbleFactor",false)),  
     alpha1min_(dict.lookupOrDefault<bool>("minBlendedAlpha1",0.0)),
     alpha1max_(dict.lookupOrDefault<bool>("maxBlendedAlpha1",1.0)),   
-    residualAlpha_(dict.lookupOrDefault<scalar>("n",1e-6)), 
+    residualAlpha_(dict.lookupOrDefault<scalar>("residualAlpha",1e-6)), 
     saturationTmodel_
     (
         saturationModel::New
@@ -220,13 +220,22 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
 
  
     volScalarField bubbleFactor = phase1;
-    
+
+//        Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+ //            <<  "     max = " << max(bubbleFactor).value()  << endl;
+             
+                 
     bubbleFactor = neg0(phase1-alpha1min_) * phase1;
     bubbleFactor = pos0(alpha1max_-phase1) * bubbleFactor;
     // Linearizing
+//            Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+//             <<  "     max = " << max(bubbleFactor).value()  << endl;
     bubbleFactor = (bubbleFactor - alpha1min_)/(alpha1max_ - alpha1min_);
+//             Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+//             <<  "     max = " << max(bubbleFactor).value()  << endl;   
     bubbleFactor = max(bubbleFactor,residualAlpha_);
-   
+ //             Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+ //            <<  "     max = " << max(bubbleFactor).value()  << endl; 
 
 
 // Linear blending
@@ -304,6 +313,8 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
 //     Info << "line 201" << endl;
       if (bFactor_) 
       {
+ //       Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+ //            <<  "     max = " << max(bubbleFactor).value()  << endl;
         return bubbleFactor * factor*phase2*Ja*meshVol*rho1*dNucVol ;
       }
       else
