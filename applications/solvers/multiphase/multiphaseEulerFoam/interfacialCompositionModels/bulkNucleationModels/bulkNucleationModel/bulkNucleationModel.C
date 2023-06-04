@@ -48,11 +48,15 @@ Foam::bulkNucleationModel::bulkNucleationModel
 )
 :
     pair_(pair),
-    WcrkTNmin2_(dict.lookup<scalar>("WcrkTNmin2",0.03)),
-    WcrkTDelta_(dict.lookup<scalar>("WcrkTDelta",0.001)),    
+    WcrkTNmin2_(dict.lookupOrDefault<scalar>("WcrkTNmin2",0.03)),
+    WcrkTDelta_(dict.lookupOrDefault<scalar>("WcrkTDelta",0.001)),    
     WcrFrac_(dict.lookupOrDefault<scalar>("WcrFrac",1)),
-    dNuc_(dict.lookup<scalar>("dNuc",1e-4)),  
-    n_(dict.lookup<scalar>("n",1)), 
+    dNuc_(dict.lookupOrDefault<scalar>("dNuc",1e-4)),  
+    n_(dict.lookupOrDefault<scalar>("n",1)),
+    bFactor_(dict.lookupOrDefault<bool>("bubbleFactor",false)),  
+    alpha1min_(dict.lookupOrDefault<bool>("minBlendedAlpha1",0.0)),
+    alpha1max_(dict.lookupOrDefault<bool>("maxBlendedAlpha1",1.0)),   
+    residualAlpha_(dict.lookupOrDefault<scalar>("n",1e-6)), 
     saturationTmodel_
     (
         saturationModel::New
@@ -213,8 +217,21 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     
            );
     meshVol.ref() =   pair_.phase1().mesh().V(); 
+
+ 
+    volScalarField bubbleFactor = phase1;
     
-    
+    bubbleFactor = neg0(phase1-alpha1min_) * phase1;
+    bubbleFactor = pos0(alpha1max_-phase1) * bubbleFactor;
+    // Linearizing
+    bubbleFactor = (bubbleFactor - alpha1min_)/(alpha1max_ - alpha1min_);
+    bubbleFactor = max(bubbleFactor,residualAlpha_);
+   
+
+
+// Linear blending
+   
+       
     const volScalarField pSat(saturationPmodel_->pSat(T1));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
@@ -285,8 +302,15 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
           
            
 //     Info << "line 201" << endl;
-
-     return factor*phase2*Ja*meshVol*rho1*dNucVol ;
+      if (bFactor_) 
+      {
+        return bubbleFactor * factor*phase2*Ja*meshVol*rho1*dNucVol ;
+      }
+      else
+      {     
+        return factor*phase2*Ja*meshVol*rho1*dNucVol ;
+      }
+     
 }
 
 

@@ -74,7 +74,19 @@ class bulkNucleationModel
          
          //- Cluster size in the bubble
          const scalar n_;
+ 
+         //- bubbleFactor in nucleation, bubbles promoting nucleaiton
+         const bool bFactor_; 
+
+         //- bubbleFactor in nucleation, bubbles promoting nucleaiton
+         const bool alpha1min_; 
          
+         //- bubbleFactor in nucleation, bubbles promoting nucleaiton
+         const bool alpha1max_;  
+         
+         //- Residual Alpha
+         const scalar residualAlpha_; 
+    
          // Hetereogenity factor
    //      const scalar phi_;
    
