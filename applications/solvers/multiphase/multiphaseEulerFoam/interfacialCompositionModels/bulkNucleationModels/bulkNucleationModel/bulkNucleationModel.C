@@ -54,8 +54,8 @@ Foam::bulkNucleationModel::bulkNucleationModel
     dNuc_(dict.lookupOrDefault<scalar>("dNuc",1e-4)),  
     n_(dict.lookupOrDefault<scalar>("n",1)),
     bFactor_(dict.lookupOrDefault<bool>("bubbleFactor",false)),  
-    alpha1min_(dict.lookupOrDefault<bool>("minBlendedAlpha1",0.0)),
-    alpha1max_(dict.lookupOrDefault<bool>("maxBlendedAlpha1",1.0)),   
+    alpha1min_(dict.lookupOrDefault<scalar>("minBlendedAlpha1",0.0)),
+    alpha1max_(dict.lookupOrDefault<scalar>("maxBlendedAlpha1",1.0)),   
     residualAlpha_(dict.lookupOrDefault<scalar>("residualAlpha",1e-6)), 
     saturationTmodel_
     (
@@ -222,20 +222,41 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     volScalarField bubbleFactor = phase1;
 
 //        Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
- //            <<  "     max = " << max(bubbleFactor).value()  << endl;
-             
-                 
-    bubbleFactor = neg0(phase1-alpha1min_) * phase1;
-    bubbleFactor = pos0(alpha1max_-phase1) * bubbleFactor;
-    // Linearizing
-//            Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
 //             <<  "     max = " << max(bubbleFactor).value()  << endl;
-    bubbleFactor = (bubbleFactor - alpha1min_)/(alpha1max_ - alpha1min_);
-//             Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
-//             <<  "     max = " << max(bubbleFactor).value()  << endl;   
-    bubbleFactor = max(bubbleFactor,residualAlpha_);
- //             Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
- //            <<  "     max = " << max(bubbleFactor).value()  << endl; 
+ 
+ 
+  //       Info << "pos0 : min = " << min(pos0(phase1-alpha1min_) ).value() 
+    //        <<  "     max = " << max( pos0(phase1-alpha1min_) ).value()  << endl;
+            
+   //      Info << "neg0 : min = " << min(neg0(phase1-alpha1min_) ).value() 
+  //          <<  "     max = " << max( neg0(phase1-alpha1min_) ).value()  << endl;                        
+                 
+ //   bubbleFactor = pos(phase1-alpha1min_) * bubbleFactor;
+    
+  //          Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+  //          <<  "     max = " << max(bubbleFactor).value()  << endl;
+    
+  //  bubbleFactor = neg(phase1 - alpha1max_ ) * bubbleFactor;
+    // Linearizing
+    //         Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+    //          <<  "     max = " << max(bubbleFactor).value()  << endl;
+   // bubbleFactor = (bubbleFactor - alpha1min_)/(alpha1max_ - alpha1min_);
+    //          Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+     //         <<  "     max = " << max(bubbleFactor).value()  << endl;  
+              
+  //  bubbleFactor = min(max(bubbleFactor,0.0),1.0);
+
+
+                  
+  //  bubbleFactor = pos(bubbleFactor-alpha1min_) * bubbleFactor;              
+
+    //          Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+    //          <<  "     max = " << max(bubbleFactor).value()  << endl;  
+              
+           bubbleFactor.max(residualAlpha_);                 
+//    bubbleFactor = max(bubbleFactor,residualAlpha_);
+        Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+             <<  "     max = " << max(bubbleFactor).value()  << endl; 
 
 
 // Linear blending
@@ -313,8 +334,8 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
 //     Info << "line 201" << endl;
       if (bFactor_) 
       {
- //       Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
- //            <<  "     max = " << max(bubbleFactor).value()  << endl;
+         Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+              <<  "     max = " << max(bubbleFactor).value()  << endl;
         return bubbleFactor * factor*phase2*Ja*meshVol*rho1*dNucVol ;
       }
       else
