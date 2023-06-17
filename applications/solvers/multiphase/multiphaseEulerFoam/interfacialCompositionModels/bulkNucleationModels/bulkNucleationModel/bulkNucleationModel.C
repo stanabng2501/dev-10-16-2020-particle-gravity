@@ -221,41 +221,29 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
  
     volScalarField bubbleFactor = phase1;
 
-//        Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
-//             <<  "     max = " << max(bubbleFactor).value()  << endl;
+//    Info << "alphamin =" <<alpha1min_ << "alphamax ="<< alpha1max_ << endl;
+
+      bubbleFactor = neg0(bubbleFactor - alpha1min_)* alpha1min_ +  pos(bubbleFactor - alpha1min_)* bubbleFactor; 
+//        Info << "226 min = " <<  min(bubbleFactor.primitiveField())
+//             <<  "     max = " <<  max(bubbleFactor.primitiveField()) << endl;
  
- 
-  //       Info << "pos0 : min = " << min(pos0(phase1-alpha1min_) ).value() 
-    //        <<  "     max = " << max( pos0(phase1-alpha1min_) ).value()  << endl;
+      bubbleFactor = pos0(bubbleFactor - alpha1max_)* alpha1max_ + neg(bubbleFactor - alpha1max_)* bubbleFactor ; 
+                        
+                        
+//        Info << "232 min = " << min(bubbleFactor).value() 
+//           <<  "     max = " << max( bubbleFactor ).value()  << endl;
+
+      bubbleFactor =  (bubbleFactor -  alpha1min_)/  (alpha1max_ -  alpha1min_);
             
-   //      Info << "neg0 : min = " << min(neg0(phase1-alpha1min_) ).value() 
-  //          <<  "     max = " << max( neg0(phase1-alpha1min_) ).value()  << endl;                        
+//       Info << "237 min = " << min(bubbleFactor ).value() 
+//          <<  "     max = " << max( bubbleFactor).value()  << endl;                        
                  
- //   bubbleFactor = pos(phase1-alpha1min_) * bubbleFactor;
-    
-  //          Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
-  //          <<  "     max = " << max(bubbleFactor).value()  << endl;
-    
-  //  bubbleFactor = neg(phase1 - alpha1max_ ) * bubbleFactor;
-    // Linearizing
-    //         Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
-    //          <<  "     max = " << max(bubbleFactor).value()  << endl;
-   // bubbleFactor = (bubbleFactor - alpha1min_)/(alpha1max_ - alpha1min_);
-    //          Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
-     //         <<  "     max = " << max(bubbleFactor).value()  << endl;  
-              
-  //  bubbleFactor = min(max(bubbleFactor,0.0),1.0);
+                
 
-
-                  
-  //  bubbleFactor = pos(bubbleFactor-alpha1min_) * bubbleFactor;              
-
-    //          Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
-    //          <<  "     max = " << max(bubbleFactor).value()  << endl;  
               
            bubbleFactor.max(residualAlpha_);                 
 //    bubbleFactor = max(bubbleFactor,residualAlpha_);
-        Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+        Info << "264 : min = " << min(bubbleFactor).value() 
              <<  "     max = " << max(bubbleFactor).value()  << endl; 
 
 
