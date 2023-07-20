@@ -57,6 +57,8 @@ Foam::bulkNucleationModel::bulkNucleationModel
     alpha1min_(dict.lookupOrDefault<scalar>("minBlendedAlpha1",0.0)),
     alpha1max_(dict.lookupOrDefault<scalar>("maxBlendedAlpha1",1.0)),   
     residualAlpha_(dict.lookupOrDefault<scalar>("residualAlpha",1e-6)), 
+    dAlpha_(dict.lookupOrDefault<scalar>("dAlpha",1e-3)),    
+    
     saturationTmodel_
     (
         saturationModel::New
@@ -219,32 +221,15 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     meshVol.ref() =   pair_.phase1().mesh().V(); 
 
  
-    volScalarField bubbleFactor = phase1;
 
-//    Info << "alphamin =" <<alpha1min_ << "alphamax ="<< alpha1max_ << endl;
-
-      bubbleFactor = neg0(bubbleFactor - alpha1min_)* alpha1min_ +  pos(bubbleFactor - alpha1min_)* bubbleFactor; 
-//        Info << "226 min = " <<  min(bubbleFactor.primitiveField())
-//             <<  "     max = " <<  max(bubbleFactor.primitiveField()) << endl;
- 
-      bubbleFactor = pos0(bubbleFactor - alpha1max_)* alpha1max_ + neg(bubbleFactor - alpha1max_)* bubbleFactor ; 
-                        
-                        
-//        Info << "232 min = " << min(bubbleFactor).value() 
-//           <<  "     max = " << max( bubbleFactor ).value()  << endl;
-
-      bubbleFactor =  (bubbleFactor -  alpha1min_)/  (alpha1max_ -  alpha1min_);
             
-//       Info << "237 min = " << min(bubbleFactor ).value() 
-//          <<  "     max = " << max( bubbleFactor).value()  << endl;                        
+                        
                  
                 
 
               
-           bubbleFactor.max(residualAlpha_);                 
-//    bubbleFactor = max(bubbleFactor,residualAlpha_);
-        Info << "264 : min = " << min(bubbleFactor).value() 
-             <<  "     max = " << max(bubbleFactor).value()  << endl; 
+            
+ 
 
 
 // Linear blending
@@ -280,6 +265,33 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
       
  //   Info<< "rc   min = " << min(rc).value()<< "  rc   max = " << max(rc).value() <<  "  rc  dimensions = " << rc.dimensions() <<endl;
      const volScalarField WcrkTN =     4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);  
+
+
+    volScalarField bubbleFactor = phase1;
+
+
+    if( max(bubbleFactor).value() > alpha1min_  ) 
+    
+    {
+        const scalar alpha1dmax = alpha1min_ +dAlpha_;
+        volScalarField WcrkTNTemp = pos0(bubbleFactor - alpha1min_)*WcrkTN;
+         WcrkTNTemp =   neg0(bubbleFactor - alpha1dmax) *WcrkTNTemp ;   
+        const scalar WcrkTNTempMin =  min(WcrkTNTemp).value();
+        const scalar WcrkTNTempMax =  max(WcrkTNTemp).value();    
+        volScalarField bubbleFactorTemp = pos0(WcrkTN-WcrkTNTempMin)* bubbleFactor;
+        bubbleFactorTemp = neg0(WcrkTN-WcrkTNTempMax)* bubbleFactorTemp; 
+        bubbleFactor =   neg0(bubbleFactor - alpha1dmax) * bubbleFactorTemp + pos(bubbleFactor - alpha1dmax)*bubbleFactor;
+        
+            
+    
+    }
+    
+    bubbleFactor = neg0(bubbleFactor - alpha1min_)* alpha1min_ +  pos(bubbleFactor - alpha1min_)* bubbleFactor; 
+    bubbleFactor = pos0(bubbleFactor - alpha1max_)* alpha1max_ + neg(bubbleFactor - alpha1max_)* bubbleFactor ; 
+    bubbleFactor =  (bubbleFactor -  alpha1min_)/  (alpha1max_ -  alpha1min_);
+    bubbleFactor.max(residualAlpha_);     
+
+
      scalar   WcrLimit = WcrkTNmin2_ + WcrkTDelta_;
      
 
