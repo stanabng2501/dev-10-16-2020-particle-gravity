@@ -90,7 +90,10 @@ class bulkNucleationModel
          //- Residual Alpha
          const scalar dAlpha_; 
 
-    
+         //- Residual Alpha
+         const scalar  dWcr_; 
+         
+          
          // Hetereogenity factor
    //      const scalar phi_;
    

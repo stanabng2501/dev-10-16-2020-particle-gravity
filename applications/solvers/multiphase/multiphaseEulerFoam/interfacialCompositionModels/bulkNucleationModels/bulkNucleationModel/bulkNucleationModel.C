@@ -58,7 +58,7 @@ Foam::bulkNucleationModel::bulkNucleationModel
     alpha1max_(dict.lookupOrDefault<scalar>("maxBlendedAlpha1",1.0)),   
     residualAlpha_(dict.lookupOrDefault<scalar>("residualAlpha",1e-6)), 
     dAlpha_(dict.lookupOrDefault<scalar>("dAlpha",1e-3)),    
-    
+    dWcr_(dict.lookupOrDefault<scalar>("dWcr",1e-3)),    
     saturationTmodel_
     (
         saturationModel::New
@@ -220,17 +220,6 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
            );
     meshVol.ref() =   pair_.phase1().mesh().V(); 
 
- 
-
-            
-                        
-                 
-                
-
-              
-            
- 
-
 
 // Linear blending
    
@@ -274,14 +263,23 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     
     {
         const scalar alpha1dmax = alpha1min_ +dAlpha_;
-        volScalarField WcrkTNTemp = pos0(bubbleFactor - alpha1min_)*WcrkTN;
-         WcrkTNTemp =   neg0(bubbleFactor - alpha1dmax) *WcrkTNTemp ;   
-        const scalar WcrkTNTempMin =  min(WcrkTNTemp).value();
-        const scalar WcrkTNTempMax =  max(WcrkTNTemp).value();    
-        volScalarField bubbleFactorTemp = pos0(WcrkTN-WcrkTNTempMin)* bubbleFactor;
-        bubbleFactorTemp = neg0(WcrkTN-WcrkTNTempMax)* bubbleFactorTemp; 
-        bubbleFactor =   neg0(bubbleFactor - alpha1dmax) * bubbleFactorTemp + pos(bubbleFactor - alpha1dmax)*bubbleFactor;
         
+        volScalarField WcrkTNTemp = neg(bubbleFactor - alpha1min_)*1e6 + pos0(bubbleFactor - alpha1min_)*WcrkTN;
+ 
+            
+   
+        const scalar WcrkTNTempMin =  min(WcrkTNTemp).value();
+        
+//        WcrkTNTemp = neg(bubbleFactor - alpha1dmax)*1e6 + pos0(bubbleFactor - alpha1dmax)*WcrkTN;
+        const scalar WcrkTNTempMax =  WcrkTNTempMin +dWcr_; 
+        
+        Info << "WcrkTNTempMin, WcrkTNTempMax  = "<< WcrkTNTempMin << " , " <<  WcrkTNTempMax <<endl; 
+        
+ 
+ 
+        
+        bubbleFactor =   neg0(WcrkTN - WcrkTNTempMax) * alpha1dmax + pos(WcrkTN - WcrkTNTempMax)*bubbleFactor;
+        Info << "bubbleFactor min, max = "<< min(bubbleFactor).value() << " , " <<  max(bubbleFactor).value() <<endl;         
             
     
     }
@@ -289,6 +287,8 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     bubbleFactor = neg0(bubbleFactor - alpha1min_)* alpha1min_ +  pos(bubbleFactor - alpha1min_)* bubbleFactor; 
     bubbleFactor = pos0(bubbleFactor - alpha1max_)* alpha1max_ + neg(bubbleFactor - alpha1max_)* bubbleFactor ; 
     bubbleFactor =  (bubbleFactor -  alpha1min_)/  (alpha1max_ -  alpha1min_);
+
+
     bubbleFactor.max(residualAlpha_);     
 
 
