@@ -274,13 +274,22 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
         const scalar WcrkTNTempMax =  WcrkTNTempMin +dWcr_; 
         
         Info << "WcrkTNTempMin, WcrkTNTempMax  = "<< WcrkTNTempMin << " , " <<  WcrkTNTempMax <<endl; 
-        
+
+
+ //        Info << "bubbleFactor min, max = "<<  min(bubbleFactor .primitiveField()) << " , " <<         max(bubbleFactor .primitiveField())<<endl;        
  
- 
+        bubbleFactor = neg(WcrkTN - WcrkTNTempMin)*alpha1min_ +
+                       pos0(WcrkTN - WcrkTNTempMin) * neg(WcrkTN - WcrkTNTempMax)* alpha1dmax + 
+                       pos0(WcrkTN - WcrkTNTempMax)*bubbleFactor; 
+
+//         Info << "bubbleFactor min, max = "<<  min(bubbleFactor .primitiveField()) << " , " <<         max(bubbleFactor .primitiveField())<<endl; 
         
-        bubbleFactor =   neg0(WcrkTN - WcrkTNTempMax) * alpha1dmax;
+                
+/*        bubbleFactor =   neg0(WcrkTN - WcrkTNTempMax) * alpha1dmax;
+        Info << "bubbleFactor min, max = "<< min(bubbleFactor).value() << " , " <<  max(bubbleFactor).value() <<endl;  
         bubbleFactor =  pos(WcrkTN - WcrkTNTempMin)*bubbleFactor;
-        Info << "bubbleFactor min, max = "<< min(bubbleFactor).value() << " , " <<  max(bubbleFactor).value() <<endl;         
+*/
+        
             
     
     }
@@ -289,6 +298,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     bubbleFactor = pos0(bubbleFactor - alpha1max_)* alpha1max_ + neg(bubbleFactor - alpha1max_)* bubbleFactor ; 
     bubbleFactor =  (bubbleFactor -  alpha1min_)/  (alpha1max_ -  alpha1min_);
 
+        Info << "bubbleFactor min, max = "<< min(bubbleFactor).value() << " , " <<  max(bubbleFactor).value() <<endl;  
 
     bubbleFactor.max(residualAlpha_);     
 
