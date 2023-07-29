@@ -93,6 +93,9 @@ class bulkNucleationModel
          //- Residual Alpha
          const scalar  dWcr_; 
          
+         //- blending required
+         const bool blend_;
+         
           
          // Hetereogenity factor
    //      const scalar phi_;
