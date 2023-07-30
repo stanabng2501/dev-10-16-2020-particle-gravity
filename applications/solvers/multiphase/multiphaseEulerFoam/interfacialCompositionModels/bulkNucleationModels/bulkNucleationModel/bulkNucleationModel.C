@@ -59,7 +59,8 @@ Foam::bulkNucleationModel::bulkNucleationModel
     residualAlpha_(dict.lookupOrDefault<scalar>("residualAlpha",1e-6)), 
     dAlpha_(dict.lookupOrDefault<scalar>("dAlpha",1e-5)),    
     dWcr_(dict.lookupOrDefault<scalar>("dWcr",1e-5)),    
-    blend_(dict.lookupOrDefault<bool>("blending",false)), 
+    blend_(dict.lookupOrDefault<bool>("blending",false)),
+    axi_(dict.lookupOrDefault<bool>("axisymmetric",false)), 
     saturationTmodel_
     (
         saturationModel::New
@@ -260,7 +261,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     volScalarField bubbleFactor = phase1;
 
 
-    if( max(bubbleFactor).value() > alpha1min_  ) 
+    if( max(bubbleFactor).value() > alpha1min_  && axi_  ) 
     
     {
         const scalar alpha1dmax = alpha1min_ +dAlpha_;
@@ -305,6 +306,14 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
 
         Info << "blended bubbleFactor min, max = "<< min(bubbleFactor).value() << " , " <<  max(bubbleFactor).value() <<endl;  
     }
+
+    else
+
+      {
+	bubbleFactor = pos0(bubbleFactor - alpha1min_)* neg0(bubbleFactor - alpha1max_)*bubbleFactor;
+       
+       Info << "Un-blended bubbleFactor min, max = "<< min(bubbleFactor).value() << " , " <<  max(bubbleFactor).value() <<endl;
+      }	
     
     bubbleFactor.max(residualAlpha_); 
      scalar   WcrLimit = WcrkTNmin2_ + WcrkTDelta_;

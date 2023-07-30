@@ -96,7 +96,11 @@ class bulkNucleationModel
          //- blending required
          const bool blend_;
          
+
+         // - axisymmetric option
           
+         const bool axi_;
+  
          // Hetereogenity factor
    //      const scalar phi_;
    
