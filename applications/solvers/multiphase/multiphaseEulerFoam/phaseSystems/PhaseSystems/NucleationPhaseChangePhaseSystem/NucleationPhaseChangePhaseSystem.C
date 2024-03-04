@@ -174,9 +174,9 @@ NucleationPhaseChangePhaseSystem
         
        forAllConstIter(phasePair, pair, pairIter)
        {
-//          const autoPtr<bulkNucleationModel>& bulkNucleationModelPtr =
- //               nucleationModelIter()[pairIter.index()];
- //          if (!bulkNucleationModelPtr.valid()) continue;
+         const autoPtr<bulkNucleationModel>& bulkNucleationModelPtr =
+               nucleationModelIter()[pairIter.index()];
+         if (!bulkNucleationModelPtr.valid()) continue;
  
            const word& otherPhasename = pairIter.otherPhase().name();
              

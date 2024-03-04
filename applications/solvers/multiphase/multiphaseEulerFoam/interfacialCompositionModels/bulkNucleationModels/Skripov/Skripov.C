@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "Doring.H"
+#include "Skripov.H"
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 #include "surfaceTensionModel.H" 
@@ -36,11 +36,11 @@ namespace Foam
 {
 namespace bulkNucleationModels
 {
-    defineTypeNameAndDebug(Doring, 0);
+    defineTypeNameAndDebug(Skripov, 0);
     addToRunTimeSelectionTable
     (
         bulkNucleationModel,
-        Doring,
+        Skripov,
         dictionary
     );
 }
@@ -53,7 +53,7 @@ namespace bulkNucleationModels
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::bulkNucleationModels::Doring::Doring
+Foam::bulkNucleationModels::Skripov::Skripov
 (
     const dictionary& dict,
     const phasePair& pair
@@ -67,14 +67,14 @@ Foam::bulkNucleationModels::Doring::Doring
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::bulkNucleationModels::Doring::~Doring()
+Foam::bulkNucleationModels::Skripov::~Skripov()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
  
 Foam::tmp<Foam::volScalarField>
-Foam::bulkNucleationModels::Doring::B
+Foam::bulkNucleationModels::Skripov::B
  (
    const phaseModel& phase1 ,
    const phaseModel& phase2 ,
@@ -89,6 +89,7 @@ Foam::bulkNucleationModels::Doring::B
      const volScalarField& rho1(thermo1.rho());
      const volScalarField& rho2(thermo2.rho());
      const volScalarField& p(thermo1.p());
+     const volScalarField& T1(thermo1.T());
      const volScalarField& T2(thermo2.T());
      const volScalarField sigma
                      (
@@ -97,27 +98,26 @@ Foam::bulkNucleationModels::Doring::B
                              phasePair(phase1, phase2)
                           ).sigma()
                       );
- //   Info<< "sigma = " << min(sigma.primitiveField()) << "  sigma   max = " << max(sigma.primitiveField()) <<  " sigma  dimensions = " << sigma.dimensions() <<endl;                              
-    const volScalarField pg =  p+(pSat-p)*(1-rho1/rho2)  ;
-                   
-    volScalarField b(p/pg) ; 
-//    b.max(small);
-//    Info<< "b  min = " << min(b.primitiveField()) << "  b   max = " << max(b.primitiveField()) <<  "  b  dimensions = " << b.dimensions() <<endl;
+                      
+                      
+    volScalarField rc ((2*sigma)/ ( ((rho2/rho1) -1)* (p - pSat)));                      
+              
+    //const dimensionedScalar rcMax( dimLength,0.01);
+    rc =neg0(rc)*0.0 + pos(rc)*rc;
+ 
+    volScalarField Acr(4.0*constant::mathematical::pi* sqr(rc));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number  
     const volScalarField w1molecule =  thermo1.W()/ (1000*Av);
-    const volScalarField explkT =  exp((thermo1.ha() - thermo2.ha())*w1molecule/ (-k*T2 ))  ;
-
- //    Info<< "w1molecule  = " << min(w1molecule .primitiveField()) << "  w1molecule    max = " << max(w1molecule .primitiveField()) <<  " w1molecule   dimensions = " << w1molecule .dimensions() <<endl;           
-    const volScalarField factor = sqrt(6*sigma /((3-b) * constant::mathematical::pi*w1molecule ));
-
- //    Info<< "explkT = " << min(explkT.primitiveField()) << "  explkT   max = " << max(explkT.primitiveField()) <<  " explkT  dimensions = " << explkT.dimensions() <<endl;           
-    return explkT*factor;
+ 
+     
+    return Acr*p /sqrt(2*constant::mathematical::pi*w1molecule*k*T2);
             
  } 
 
  
 
+ //    Info<< "explkT = " << min(explkT.primitiveField()) << "  explkT   max = " << max(explkT.primitiveField()) <<  " explkT  dimensions = " << explkT.dimensions() <<endl;      
 
  
 
