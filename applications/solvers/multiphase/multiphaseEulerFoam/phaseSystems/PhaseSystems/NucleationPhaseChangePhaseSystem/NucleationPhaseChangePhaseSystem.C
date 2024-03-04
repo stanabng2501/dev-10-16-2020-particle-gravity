@@ -300,6 +300,7 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
           
         forAllConstIter(phasePair, pair, pairIter)
         {
+            const phaseModel& phase = *pairIter;
             const label sign = pairIter.index() == 0 ? 1 : -1;
             const autoPtr<bulkNucleationModel>& bulkNucleationModelPtr =
                 nucleationModelIter()[pairIter.index()];
@@ -314,16 +315,30 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
            if (sign ==1)
             {
               WcrKTN2to1 = nucleationModels_[pair][pairIter.index()]->CalcWcrKTN2to1();
-             const volScalarField dmdtfNew1(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
-             dmdtfNew  += sign*(dmdtfNew1);
+              const volScalarField dmdtfNew1(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
+              dmdtfNew  += sign*(dmdtfNew1);
+              Info<< "Calculated mass transfer rates for "
+                << phase.name() <<" to "<< pairIter.otherPhase().name()
+                << ": min = " << min(dmdtfNew1).value()  
+                << ", mean = " << average(dmdtfNew1).value()  
+                << ", max = " << max(dmdtfNew1).value()  
+                << ", sum = " << sum(dmdtfNew1).value()
+                << endl;             
 //            dmdtfNew  += sign*((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew1);
             }
             
             else
             {
-        //    replace this by  dmdts1to2         
-   //          const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
-     //        dmdtfNew  += sign*(dmdtfNew2);
+            //   replace this by  dmdts1to2         
+               const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts1to2(phi));
+               dmdtfNew  += sign*(dmdtfNew2);
+               Info<< "Calculated mass transfer rates for "
+                << phase.name() <<" to "<< pairIter.otherPhase().name()
+                << ": min = " << min(dmdtfNew2).value()  
+                << ", mean = " << average(dmdtfNew2).value()  
+                << ", max = " << max(dmdtfNew2).value()  
+                << ", sum = " << sum(dmdtfNew2).value()
+                << endl;  
    
             }
                       
@@ -331,7 +346,7 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
         }   
 
          dmdtfNew  = max( min(dmdtfNew,dmdtfMax),dmdtfMin);
-            Info<< "Calculated mass transfer rates "
+            Info<< "Total Calculated mass transfer rates "
                 << ": min = " << min(dmdtfNew).value()  
                 << ", mean = " << average(dmdtfNew).value()  
                 << ", max = " << max(dmdtfNew).value()  

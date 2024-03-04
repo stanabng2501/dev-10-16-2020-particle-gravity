@@ -83,13 +83,13 @@ Foam::bulkNucleationModels::Skripov::B
  ) const
  
  {
-      
+//     Info <<"B type = Skripov"<<endl; 
      const rhoThermo& thermo1 = phase1.thermo();
      const rhoThermo& thermo2 = phase2.thermo();
      const volScalarField& rho1(thermo1.rho());
      const volScalarField& rho2(thermo2.rho());
      const volScalarField& p(thermo1.p());
-     const volScalarField& T1(thermo1.T());
+//     const volScalarField& T1(thermo1.T());
      const volScalarField& T2(thermo2.T());
      const volScalarField sigma
                      (
@@ -102,14 +102,15 @@ Foam::bulkNucleationModels::Skripov::B
                       
     volScalarField rc ((2*sigma)/ ( ((rho2/rho1) -1)* (p - pSat)));                      
               
-    //const dimensionedScalar rcMax( dimLength,0.01);
-    rc =neg0(rc)*0.0 + pos(rc)*rc;
+    const dimensionedScalar rcMax( dimLength,0.0);
+    rc =neg0(rc)*rcMax + pos(rc)*rc;
  
     volScalarField Acr(4.0*constant::mathematical::pi* sqr(rc));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number  
     const volScalarField w1molecule =  thermo1.W()/ (1000*Av);
  
+    const volScalarField temp(Acr*p /sqrt(2*constant::mathematical::pi*w1molecule*k*T2)); 
      
     return Acr*p /sqrt(2*constant::mathematical::pi*w1molecule*k*T2);
             

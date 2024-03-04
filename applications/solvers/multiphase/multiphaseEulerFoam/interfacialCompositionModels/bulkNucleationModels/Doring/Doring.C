@@ -83,7 +83,7 @@ Foam::bulkNucleationModels::Doring::B
  ) const
  
  {
-      
+//      Info <<"B type = Doring"<<endl;     
      const rhoThermo& thermo1 = phase1.thermo();
      const rhoThermo& thermo2 = phase2.thermo();
      const volScalarField& rho1(thermo1.rho());

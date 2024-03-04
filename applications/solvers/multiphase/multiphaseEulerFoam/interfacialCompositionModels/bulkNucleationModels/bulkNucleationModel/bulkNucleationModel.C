@@ -106,7 +106,8 @@ Foam::bulkNucleationModel::~bulkNucleationModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// this is for Nucleation Phase change
+
+
 Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::CalcWcrKTN2to1() const
  
  {
@@ -184,12 +185,13 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::CalcWcrKTN2to1() cons
  
  }
 
- 
-Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
+
+// this is for gas to liquid phase change
+Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts1to2(
  const volScalarField& phi
  ) const
 {
-
+ 
      const phaseModel& phase1 = pair_.phase1();
      const phaseModel& phase2 = pair_.phase2();
      const rhoThermo& thermo1 = phase1.thermo();
@@ -221,12 +223,75 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     
            );
     meshVol.ref() =   pair_.phase1().mesh().V(); 
+    
+    const volScalarField pSat(saturationPmodel_->pSat(T1));
+    const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
+    const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
+    
+    volScalarField rc ((2*sigma)/ ( ((rho2/rho1) -1)* (p - pSat)));                      
+              
+    const dimensionedScalar rcMax( dimLength,0.01);
+    rc =neg0(rc)*rcMax + pos(rc)*rc;    
+
+    const volScalarField WcrkTN = 4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);  
+
+
+    volScalarField bubbleFactor = phase2;  
+    bubbleFactor.max(residualAlpha_);     
+   const volScalarField WcrkTNPhi =    phi*WcrkTN ;              
+   const volScalarField Ja =    (1000/thermo1.W())*Av* rho1 * B(phase1, phase2,pSat, "dmdts2to1") * exp(-WcrkTNPhi);  
+   dimensionedScalar dNucVol = (4/3) *constant::mathematical::pi * pow((dNuc_/2),3.0) ;      
+   Info << "dropletFactor 1 to 2 : min = " << min(bubbleFactor).value() 
+        <<  "     max = " << max(bubbleFactor).value()  << endl;
+        
+        
+   return bubbleFactor * phase1*Ja*meshVol*rho2*dNucVol ; // last three terms number of liquid droplets X mass of each droplets
+
+}
+
+// this is for liquid to gas phase change 
+Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
+ const volScalarField& phi
+ ) const
+{
+
+     const phaseModel& phase1 = pair_.phase1();
+     const phaseModel& phase2 = pair_.phase2();
+     const rhoThermo& thermo1 = phase1.thermo();
+     const rhoThermo& thermo2 = phase2.thermo();
+     const volScalarField& T2(thermo2.T());
+     const volScalarField& rho1(thermo1.rho());
+     const volScalarField& rho2(thermo2.rho());
+     const volScalarField& p(thermo1.p());
+     const volScalarField sigma
+                     (
+                       pair_.phase1().fluid().lookupSubModel<surfaceTensionModel>
+                          (
+                             phasePair(pair_.phase1(), pair_.phase2())
+                          ).sigma()
+                     );
+            
+     volScalarField meshVol  
+           (
+             IOobject
+              (
+                 "meshVol",
+                  pair_.phase1().mesh().time().timeName(),
+                  pair_.phase1().mesh(),
+                  IOobject::NO_READ,
+                  IOobject::NO_WRITE
+               ),
+              pair_.phase1().mesh(),
+              dimensionedScalar( dimVolume, 0.0)  
+    
+           );
+    meshVol.ref() =   pair_.phase1().mesh().V(); 
 
 
 // Linear blending
    
        
-    const volScalarField pSat(saturationPmodel_->pSat(T1));
+    const volScalarField pSat(saturationPmodel_->pSat(T2));
     const dimensionedScalar Av(Foam::constant::physicoChemical::NA) ; // avagadro number
     const dimensionedScalar k(Foam::constant::physicoChemical::k) ; // Boltzmann constant number 
 
@@ -255,7 +320,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
  */ 
       
  //   Info<< "rc   min = " << min(rc).value()<< "  rc   max = " << max(rc).value() <<  "  rc  dimensions = " << rc.dimensions() <<endl;
-     const volScalarField WcrkTN =     4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);  
+     const volScalarField WcrkTN =     4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T2*n_);  
 
 
     volScalarField bubbleFactor = phase1;
@@ -344,13 +409,13 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
     
  //    const volScalarField expWktn= exp(-WcrkTN);
 //     Info<< "Ba   min = " << min(Ba.primitiveField()) << "  Ba   max = " << max(Ba.primitiveField()) <<  "  Ba  dimensions = " << Ba.dimensions() <<endl;         
- //      Info<< "expWktn   min = " <<endl;     
+//      Info<< "expWktn   min = " <<endl;     
        
                
     const volScalarField Ja =    (1000/thermo1.W())*Av* rho2 * B(phase1, phase2,pSat, "dmdts2to1") * exp(-WcrkTNPhi);  
                          
                      
- //    Info<< "Ja   min = " << min(Ja.primitiveField()) << "  Ja   max = " << max(Ja.primitiveField()) <<  "  Ja  dimensions = " << Ja.dimensions() <<endl;
+//   Info<< "Ja   min = " << min(Ja.primitiveField()) << "  Ja   max = " << max(Ja.primitiveField()) <<  "  Ja  dimensions = " << Ja.dimensions() <<endl;
  
     dimensionedScalar dNucVol = (4/3) *constant::mathematical::pi * pow((dNuc_/2),3.0) ;
           
@@ -358,9 +423,9 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts2to1(
 //     Info << "line 201" << endl;
       if (bFactor_) 
       {
-         Info << "bubbleFactor : min = " << min(bubbleFactor).value() 
+         Info << "bubbleFactor 2 to 1 : min = " << min(bubbleFactor).value() 
               <<  "     max = " << max(bubbleFactor).value()  << endl;
-        return bubbleFactor * factor*phase2*Ja*meshVol*rho1*dNucVol ;
+        return bubbleFactor * factor*phase2*meshVol*Ja*rho1*dNucVol ; // last three terms number of gas bubbles X mass of each bubble
       }
       else
       {     

@@ -201,9 +201,12 @@ public:
           //-Depressurisation Limit
             scalar WcrFrac () const;             
                 
-         // return mass transfer from liquid too gas
+         // return mass transfer from liquid to gas
          tmp<Foam::volScalarField> dmdts2to1 ( const volScalarField& phi) const;
-         
+
+         // return mass transfer from gas to liquid
+         tmp<Foam::volScalarField> dmdts1to2 ( const volScalarField& phi) const;
+                  
         tmp<Foam::volScalarField> CalcWcrKTN2to1() const;
                
          //- B factor
