@@ -318,7 +318,7 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
               const volScalarField dmdtfNew1(nucleationModels_[pair][pairIter.index()]->dmdts2to1(phi));
               dmdtfNew  += sign*(dmdtfNew1);
               Info<< "Calculated mass transfer rates for "
-                << phase.name() <<" to "<< pairIter.otherPhase().name()
+                << pairIter.otherPhase().name()  <<" to "<<  phase.name() 
                 << ": min = " << min(dmdtfNew1).value()  
                 << ", mean = " << average(dmdtfNew1).value()  
                 << ", max = " << max(dmdtfNew1).value()  
@@ -333,7 +333,7 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                const volScalarField dmdtfNew2(nucleationModels_[pair][pairIter.index()]->dmdts1to2(phi));
                dmdtfNew  += sign*(dmdtfNew2);
                Info<< "Calculated mass transfer rates for "
-                << phase.name() <<" to "<< pairIter.otherPhase().name()
+                << pairIter.otherPhase().name()  <<" to "<<  phase.name() 
                 << ": min = " << min(dmdtfNew2).value()  
                 << ", mean = " << average(dmdtfNew2).value()  
                 << ", max = " << max(dmdtfNew2).value()  
