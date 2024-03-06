@@ -83,7 +83,14 @@ class bulkNucleationModel
          
          //- bubbleFactor in nucleation, bubbles promoting nucleaiton
          const scalar alpha1max_;  
+
+         //- bubbleFactor in nucleation, bubbles promoting nucleaiton
+         const scalar alpha2min_; 
          
+         //- bubbleFactor in nucleation, bubbles promoting nucleaiton
+         const scalar alpha2max_;  
+         
+                  
          //- Residual Alpha
          const scalar residualAlpha_; 
 

@@ -56,6 +56,8 @@ Foam::bulkNucleationModel::bulkNucleationModel
     bFactor_(dict.lookupOrDefault<bool>("bubbleFactor",false)),  
     alpha1min_(dict.lookupOrDefault<scalar>("minBlendedAlpha1",0.0)),
     alpha1max_(dict.lookupOrDefault<scalar>("maxBlendedAlpha1",1.0)),   
+    alpha2min_(dict.lookupOrDefault<scalar>("minBlendedAlpha2",0.0)),
+    alpha2max_(dict.lookupOrDefault<scalar>("maxBlendedAlpha2",1.0)), 
     residualAlpha_(dict.lookupOrDefault<scalar>("residualAlpha",1e-6)), 
     dAlpha_(dict.lookupOrDefault<scalar>("dAlpha",1e-5)),    
     dWcr_(dict.lookupOrDefault<scalar>("dWcr",1e-5)),    
@@ -236,16 +238,19 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts1to2(
     const volScalarField WcrkTN = 4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);  
 
 
-    volScalarField bubbleFactor = phase2;  
-    bubbleFactor.max(residualAlpha_);     
+    volScalarField dropletFactor = phase2;  
+    dropletFactor.max(residualAlpha_); 
+    
+   dropletFactor = pos0(dropletFactor - alpha1min_)* neg0(dropletFactor - alpha1max_)*dropletFactor;     
+   
    const volScalarField WcrkTNPhi =    phi*WcrkTN ;              
    const volScalarField Ja =    (1000/thermo1.W())*Av* rho1 * B(phase1, phase2,pSat, "dmdts2to1") * exp(-WcrkTNPhi);  
    dimensionedScalar dNucVol = (4/3) *constant::mathematical::pi * pow((dNuc_/2),3.0) ;      
-   Info << "dropletFactor 1 to 2 : min = " << min(bubbleFactor).value() 
-        <<  "     max = " << max(bubbleFactor).value()  << endl;
+   Info << "dropletFactor 1 to 2 : min = " << min(dropletFactor).value() 
+        <<  "     max = " << max(dropletFactor).value()  << endl;
         
         
-   return bubbleFactor * phase1*Ja*meshVol*rho2*dNucVol ; // last three terms number of liquid droplets X mass of each droplets
+   return dropletFactor * phase1*Ja*meshVol*rho2*dNucVol ; // last three terms number of liquid droplets X mass of each droplets
 
 }
 
