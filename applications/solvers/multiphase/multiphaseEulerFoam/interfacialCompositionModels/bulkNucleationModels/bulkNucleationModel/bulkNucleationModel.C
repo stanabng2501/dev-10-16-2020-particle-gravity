@@ -250,7 +250,7 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts1to2(
         <<  "     max = " << max(dropletFactor).value()  << endl;
         
         
-   return dropletFactor * phase1*Ja*meshVol*rho2*dNucVol ; // last three terms number of liquid droplets X mass of each droplets
+   return dropletFactor*phase1*Ja*meshVol*rho2*dNucVol ; // last three terms number of liquid droplets X mass of each droplets
 
 }
 

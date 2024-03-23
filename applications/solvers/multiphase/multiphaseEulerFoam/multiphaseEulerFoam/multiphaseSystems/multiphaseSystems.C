@@ -194,7 +194,7 @@ namespace Foam
         <
             PhaseTransferPhaseSystem
             <
-                OneResistanceHeatTransferPhaseSystem
+                TwoResistanceHeatTransferPhaseSystem
                 <
                     MomentumTransferPhaseSystem<phaseSystem>
                 >
@@ -208,7 +208,11 @@ namespace Foam
         nucleationPhaseChangeMultiphaseSystem,
         dictionary,
         nucleationPhaseChangeMultiphaseSystem
-    );     
+    );  
+    
+    
+    
+       
 }
 
 
