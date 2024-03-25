@@ -236,22 +236,32 @@ Foam::tmp<Foam::volScalarField> Foam::bulkNucleationModel::dmdts1to2(
     rc =neg0(rc)*rcMax + pos(rc)*rc;    
 
     const volScalarField WcrkTN = 4*constant::mathematical::pi*sqr(rc)*sigma/(3*k*T1*n_);  
-
-
-    volScalarField dropletFactor = phase2;  
-    dropletFactor.max(residualAlpha_); 
+    volScalarField dropletFactor = phase2; 
     
-   dropletFactor = pos0(dropletFactor - alpha1min_)* neg0(dropletFactor - alpha1max_)*dropletFactor;     
-   
+   if (bFactor_) 
+    {
+ 
+      dropletFactor.max(residualAlpha_); 
+    
+      dropletFactor = pos0(dropletFactor - alpha1min_)* neg0(dropletFactor - alpha1max_)*dropletFactor;   
+      Info << "dropletFactor 1 to 2 : min = " << min(dropletFactor).value() 
+        <<  "     max = " << max(dropletFactor).value()  << endl;  
+    }
    const volScalarField WcrkTNPhi =    phi*WcrkTN ;              
    const volScalarField Ja =    (1000/thermo1.W())*Av* rho1 * B(phase1, phase2,pSat, "dmdts2to1") * exp(-WcrkTNPhi);  
    dimensionedScalar dNucVol = (4/3) *constant::mathematical::pi * pow((dNuc_/2),3.0) ;      
-   Info << "dropletFactor 1 to 2 : min = " << min(dropletFactor).value() 
-        <<  "     max = " << max(dropletFactor).value()  << endl;
-        
-        
-   return dropletFactor*phase1*Ja*meshVol*rho2*dNucVol ; // last three terms number of liquid droplets X mass of each droplets
 
+        
+ 
+   if (bFactor_) 
+    {       
+       return dropletFactor*phase1*Ja*meshVol*rho2*dNucVol ; // last three terms number of liquid droplets X mass of each droplets
+    }
+    
+   else
+    {
+      return phase1*Ja*meshVol*rho2*dNucVol ;
+    } 
 }
 
 // this is for liquid to gas phase change 
