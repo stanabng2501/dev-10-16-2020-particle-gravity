@@ -357,8 +357,8 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 << endl;
  
  
-         dmdtf =  (1 - dmdtfRelax2to1)*pos(dmdtf) + dmdtfRelax2to1*pos(dmdtfNew); 
-         dmdtf =  (1 - dmdtfRelax1to2)*neg(dmdtf) + dmdtfRelax1to2*neg(dmdtfNew); 
+         dmdtf =  (1 - dmdtfRelax2to1)*pos(dmdtf)*dmdtf + dmdtfRelax2to1*pos(dmdtfNew)*dmdtf; 
+         dmdtf =  (1 - dmdtfRelax1to2)*neg(dmdtf)*dmdtf + dmdtfRelax1to2*neg(dmdtfNew)*dmdtf; 
  	 dmdtf  = max( min(dmdtf,dmdtfMax),dmdtfMin);
  
  //          dmdtf = pos0(dmdtfNew -dmdtfOld) *((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew) +
