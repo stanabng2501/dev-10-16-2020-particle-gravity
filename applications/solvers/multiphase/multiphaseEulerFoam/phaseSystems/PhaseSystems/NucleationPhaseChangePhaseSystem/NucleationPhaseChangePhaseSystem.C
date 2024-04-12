@@ -276,8 +276,11 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
           volScalarField& dmdtf(*this->dmdtfs_[pair]);
 
 
-        const scalar dmdtfRelax =
-              this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Relax"); 
+        const scalar dmdtfRelax2to1 =
+              this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Relax2to1");
+              
+        const scalar dmdtfRelax1to2 =
+              this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Relax1to2");                
 //          const scalar dmdtfRelaxRem =
  //               this->mesh().fieldRelaxationFactor(dmdtf.member()+ "Removal"); 
  //         const scalar dmdtfRelaxAdd =
@@ -354,7 +357,8 @@ Foam::NucleationPhaseChangePhaseSystem<BasePhaseSystem>::dmdts() const
                 << endl;
  
  
-         dmdtf =  (1 - dmdtfRelax)*dmdtf + dmdtfRelax*dmdtfNew;
+         dmdtf =  (1 - dmdtfRelax2to1)*pos(dmdtf) + dmdtfRelax2to1*pos(dmdtfNew); 
+         dmdtf =  (1 - dmdtfRelax1to2)*neg(dmdtf) + dmdtfRelax1to2*neg(dmdtfNew); 
  	 dmdtf  = max( min(dmdtf,dmdtfMax),dmdtfMin);
  
  //          dmdtf = pos0(dmdtfNew -dmdtfOld) *((1 - dmdtfRelaxAdd)*dmdtfOld  + dmdtfRelaxAdd*dmdtfNew) +
