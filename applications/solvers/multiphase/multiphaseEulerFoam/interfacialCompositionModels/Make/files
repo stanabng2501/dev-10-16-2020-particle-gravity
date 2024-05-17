@@ -21,7 +21,7 @@ bulkNucleationModels/bulkNucleationModel/bulkNucleationModelNew.C
 bulkNucleationModels/Doring/Doring.C
 bulkNucleationModels/nucleationProperties/nucleationProperties.C
 bulkNucleationModels/Skripov/Skripov.C
-
+bulkNucleationModels/Constant/Constant.C
 
 saturationModels/saturationModel/saturationModel.C
 saturationModels/saturationModel/saturationModelNew.C
